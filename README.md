@@ -68,7 +68,7 @@ When launching a training, a link will be printed in the console. Click on it to
 
 
 ## Cite
-If you use this codebase, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
+If you use this code, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
 ```console
 @article{zoss2022production,
   title={Production-Ready Face Re-Aging for Visual Effects},
