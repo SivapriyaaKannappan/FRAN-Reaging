@@ -1,0 +1,14 @@
+
+dataset/
+resized_dataset/
+toy_test_data/
+checkpoints/
+results/
+
+__pycache__
+*/**/__pycache__
+
+Sampling image pairs based on age categories.py
+
+#Ignore Wandb
+wandb/
