@@ -66,11 +66,11 @@ When launching a training, a link will be printed in the console. Click on it to
 
 
 
-Github code is not released for this paper.
 
+## Cite
 Production-Ready Face Re-Aging for Visual Effects
 https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf
-
+Github code is not released for this paper.
 https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects_Supplemental.pdf
 
 [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
