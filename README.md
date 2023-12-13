@@ -68,9 +68,16 @@ When launching a training, a link will be printed in the console. Click on it to
 
 
 ## Cite
+If you use this codebase, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
 ```console
-Production-Ready Face Re-Aging for Visual Effects
-https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf
-https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects_Supplemental.pdf
-[U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+@article{zoss2022production,
+  title={Production-Ready Face Re-Aging for Visual Effects},
+  author={Zoss, Gaspard and Chandran, Prashanth and Sifakis, Eftychios and Gross, Markus and Gotardo, Paulo and Bradley, Derek},
+  journal={ACM Transactions on Graphics (TOG)},
+  volume={41},
+  number={6},
+  pages={1--12},
+  year={2022},
+  publisher={ACM New York, NY, USA}
+}
 ```
