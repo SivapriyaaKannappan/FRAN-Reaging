@@ -100,9 +100,6 @@ def train_model(
     val_dataloader=DataLoader(dataset=val_dataset,batch_sampler=val_sampler,shuffle=False)
 
     # 5. Set up the optimizer, the loss and the learning rate scheduler 
-    # optimizer = optim.RMSprop(model.parameters(),
-    #                           lr=learning_rate, weight_decay=weight_decay, momentum=momentum, foreach=True)
-    
     optimizer_G = optim.Adam(model.parameters(), lr=learning_rate_g)
     optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_d)
             
@@ -123,7 +120,7 @@ def train_model(
         start_epoch=1
         
     # (Initialize logging)
-    experiment = wandb.init(project='FRAN', name='Face Re-Aging', 
+    experiment = wandb.init(project='FRAN TOY', name='Face Re-Aging', 
                 # track hyperparameters and run metadata
                 config={
                 "architecture": "U-Net",
@@ -164,7 +161,6 @@ def train_model(
                 age_matrix.append(torch.Tensor(img.shape[2],img.shape[3]).fill_(age[idx]))
             final_age_matrix=torch.stack((age_matrix),0)
             final_age_matrix1=torch.unsqueeze(final_age_matrix, axis=1)
-            # final_age_matrix2=torch.transpose(final_age_matrix1,0,1)
             # print("Final Age Matrix Shape:", final_age_matrix)
             final_age_matrix2=final_age_matrix1.to(device)
             input_img=torch.cat((img[0::2]/255.0,final_age_matrix2[0::2]/100,final_age_matrix2[1::2]/100), 1) # i/p img+i/p age+target age
@@ -275,15 +271,15 @@ def train_model(
                 # # # #**************************************************************
                 # # # Visualizing the image output
                 if (img_id1[0] == '1411' or img_id1[0] == '1412' or img_id1[0] == '1413' or img_id1[0] == '1414' or img_id1[0] == '1415'):
-                # if (img_id1[0] == '0008'):
                     # minVal=pred_img1.min()
                     # maxVal=pred_img1.max()
                     # vis_pred_img1=pred_img1-minVal/maxVal-minVal
                     
                     for i in range(pred_img1.size(0)):
-                        slice_tensor=pred_img1[i, :, :, :]
+                        # slice_tensor=pred_img1[i, :, :, :]
                         # slice_tensor=vis_pred_img1[i, :, :, :]
-                        slice_tensor=torch.clamp(slice_tensor, 0,1)
+                        slice_tensor=final_pred_img1[i, :, :, :]
+                        # slice_tensor=torch.clamp(slice_tensor, 0,1)
                         save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id1[0]}_{count}_{target_age1[i]}_modelout.png'))
                     
                         count+=1
@@ -352,8 +348,8 @@ def train_model(
    
 def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=10, help='Number of epochs')
-    parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=False, help='Resume checkpoint or not')
+    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=100, help='Number of epochs')
+    parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=True, help='Resume checkpoint or not')
     parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Tue_12Dec2023_171852_epoch10.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')
