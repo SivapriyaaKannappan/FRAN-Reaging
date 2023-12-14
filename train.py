@@ -63,7 +63,8 @@ def train_model(
         device,
         epochs: int = 5,
         batch_size: int = 8,
-        learning_rate: float = 1e-5,
+        learning_rate_g: float = 1e-4,
+        learning_rate_d: float = 1e-5,
         l1_weight: float = 1.0,
         lpips_weight: float =1.0,
         adv_weight: float = 0.05,
@@ -102,8 +103,8 @@ def train_model(
     # optimizer = optim.RMSprop(model.parameters(),
     #                           lr=learning_rate, weight_decay=weight_decay, momentum=momentum, foreach=True)
     
-    optimizer_G = optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate)
+    optimizer_G = optim.Adam(model.parameters(), lr=learning_rate_g)
+    optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_d)
             
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=5)  
     scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, step_size=3, gamma=0.1)  
@@ -122,20 +123,21 @@ def train_model(
         start_epoch=1
         
     # (Initialize logging)
-    experiment = wandb.init(project='FRAN TEST', name='Face Re-Aging', 
+    experiment = wandb.init(project='FRAN', name='Face Re-Aging', 
                 # track hyperparameters and run metadata
                 config={
                 "architecture": "U-Net",
                 "dataset": "Output from SAM Re-aging"
                 })
     experiment.config.update(
-        dict(epochs=epochs, batch_size=batch_size, learning_rate=learning_rate)
+        dict(epochs=epochs, batch_size=batch_size, learning_rate_g=learning_rate_g,learning_rate_d=learning_rate_d)
     )
 
     logging.info(f'''Starting training:
         Epochs:          {epochs}
         Batch size:      {batch_size}
-        Learning rate:   {learning_rate}
+        Learning rate G:   {learning_rate_g}
+        Learning rate D:   {learning_rate_d}
         Device:          {device.type}
        
     ''')
@@ -195,14 +197,12 @@ def train_model(
             #Backward propagation and optimization
             #Train G fix D
             set_requires_grad(discriminator, False)  # Ds require no gradients when optimizing Gs
-            # set_requires_grad(model, True) 
+            # set_requires_grad(model, True) #Even if we don't give this line, it implicitly denotes that G is trained and gradients are back propagated, hence commented for efficiency
             optimizer_G.zero_grad()  # Set the gradients to zero
             # Compute Generator loss
             #Right==========================================================================
             disc_pred_img = discriminator(concat_pred_img) # returns 30X30 logits map
-            #Right==========================================================================
-            # disc_pred_img = discriminator(final_pred_img) # returns 30X30 logits map
-            #==========================================================================
+            
             gloss=computeGAN_GLoss(final_pred_img,disc_pred_img,target_img,l1_weight, lpips_weight, adv_weight)
             train_gloss+=gloss
             gloss.backward() 
@@ -210,33 +210,27 @@ def train_model(
             
             #Train D fix G
             set_requires_grad(discriminator, True) 
-            # set_requires_grad(model, False) 
+            # set_requires_grad(model, False)#Even if we don't give this line, it implicitly denotes that G is trained and gradients are back propagated, hence commented for efficiency 
             optimizer_D.zero_grad()  # Set the gradients to zero
             # Compute Discriminator loss
-            #Right==========================================================================
             disc_pred_img = discriminator(concat_pred_img.detach()) # Detatch-no gradient will be backpropagated along this variable
-            #Right==========================================================================
-            # disc_pred_img = discriminator(final_pred_img.detach()) # Detatch-no gradient will be backpropagated along this variable
-            #Right==========================================================================
+        
             disc_real_img1 = discriminator(concat_real_img1) # returns 30X30 logits map
             disc_real_img2 = discriminator(concat_real_img2) # returns 30X30 logits map
-            #Right==========================================================================
-            # disc_real_img1 = discriminator(target_img) # returns 30X30 logits map
-            # disc_real_img2 = discriminator(target_img) # returns 30X30 logits map
-            #==========================================================================
+            
             dloss=computeGAN_DLoss(disc_pred_img,disc_real_img1,disc_real_img2, target_age,train_dataset.age_ids)
             train_dloss+=dloss
             dloss.backward() 
             optimizer_D.step() # Step optimizer to update model parameters
             
-            experiment.log({
-                'epoch': epoch,
-                'batch_train_gloss': gloss.item(),
-                'batch_train_dloss': dloss.item()
-            })
-            # print("=============")
-            print(f'Epoch [{epoch}/{epochs}],BatchNo[{batch_idx}/{len(train_dataloader)}], Total Generator Loss/Mini-Batch: {gloss.item():.4f}')
-            print(f'Epoch [{epoch}/{epochs}], BatchNo[{batch_idx}/{len(train_dataloader)}], Total Discriminator Loss/Mini-Batch: {dloss.item():.4f}')
+            # experiment.log({
+            #     'epoch': epoch,
+            #     'batch_train_gloss': gloss.item(),
+            #     'batch_train_dloss': dloss.item()
+            # })
+            # # print("=============")
+            print(f'Epoch [{epoch}/{epochs}],Batch[{batch_idx}/{len(train_dataloader)}], Total Generator Loss/Mini-Batch: {gloss.item():.4f}')
+            print(f'Epoch [{epoch}/{epochs}], Batch[{batch_idx}/{len(train_dataloader)}], Total Discriminator Loss/Mini-Batch: {dloss.item():.4f}')
             # print("=============")
             # Empty CUDA cache
             torch.cuda.empty_cache()
@@ -280,15 +274,15 @@ def train_model(
                 
                 # # # #**************************************************************
                 # # # Visualizing the image output
-                if (img_id1[0] == '1401' or img_id1[0] == '1402' or img_id1[0] == '1403' or img_id1[0] == '1404' or img_id1[0] == '1405'):
+                if (img_id1[0] == '1411' or img_id1[0] == '1412' or img_id1[0] == '1413' or img_id1[0] == '1414' or img_id1[0] == '1415'):
                 # if (img_id1[0] == '0008'):
-                    minVal=pred_img1.min()
-                    maxVal=pred_img1.max()
-                    vis_pred_img1=pred_img1-minVal/maxVal-minVal
+                    # minVal=pred_img1.min()
+                    # maxVal=pred_img1.max()
+                    # vis_pred_img1=pred_img1-minVal/maxVal-minVal
                     
                     for i in range(pred_img1.size(0)):
-                        # slice_tensor=pred_img1[i, :, :, :]
-                        slice_tensor=vis_pred_img1[i, :, :, :]
+                        slice_tensor=pred_img1[i, :, :, :]
+                        # slice_tensor=vis_pred_img1[i, :, :, :]
                         slice_tensor=torch.clamp(slice_tensor, 0,1)
                         save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id1[0]}_{count}_{target_age1[i]}_modelout.png'))
                     
@@ -313,22 +307,14 @@ def train_model(
                 concat_real_img21=torch.cat((target_img1,final_incorrect_age_matrix21), 1) # Synthetic Target image +incorrect target age (4 channel)
                           
                 # Compute Generator loss
-                #Right==========================================================================
                 disc_pred_img1 = discriminator(concat_pred_img1) # returns 30X30 logits map
-                #Right==========================================================================
-                # disc_pred_img1 = discriminator(final_pred_img1) # returns 30X30 logits map
-                #==========================================================================
                 gloss1=computeGAN_GLoss(final_pred_img1,disc_pred_img1,target_img1,l1_weight, lpips_weight, adv_weight)
                 val_gloss+=gloss1
                
                 # Compute Discriminator loss
-                #Right==========================================================================
                 disc_real_img11 = discriminator(concat_real_img11) # returns 30X30 logits map
                 disc_real_img21 = discriminator(concat_real_img21) # returns 30X30 logits map
-                #Right==========================================================================
-                # disc_real_img11 = discriminator(target_img1) # returns 30X30 logits map
-                # disc_real_img21 = discriminator(target_img1) # returns 30X30 logits map
-                #==========================================================================
+                          
                 dloss1=computeGAN_DLoss(disc_pred_img1,disc_real_img11,disc_real_img21, target_age1,val_dataset.age_ids)
                 val_dloss+=dloss1
             total_val_loss=val_gloss+val_dloss
@@ -338,7 +324,8 @@ def train_model(
         try:
             experiment.log({
                 'epoch': epoch,
-                'learning rate': learning_rate,
+                'learning rate G': learning_rate_g,
+                'learning rate D': learning_rate_d,
                 'total validation Loss': total_val_loss,
                 'average validation Loss': average_val_loss,
             })
@@ -349,32 +336,30 @@ def train_model(
               f' Avg Validation Loss: {average_val_loss.item():.4f}\n')
               # f' Validation Accuracy: {average_val_accuracy:.4f}')
         print("********************")
-    # Save the model
-    torch.save({'epoch'               : epoch,
-                      'model_state_dict'    : model.state_dict(),
-                      'optimizer_G_state_dict': optimizer_G.state_dict(),
-                      'optimizer_D_state_dict': optimizer_D.state_dict(),
-                      'scheduler_G_state_dict': scheduler_G.state_dict(),
-                      'scheduler_D_state_dict': scheduler_D.state_dict(),
-                      }, os.path.join(checkpoint_dir, \
-                      '{}_{}_{}_epoch{}.pth'.format("debug", model.__class__.__name__, strftime("%a_%d%b%Y_%H%M%S",gmtime()), epoch)))   
+        if (epoch%5 == 0):
+            # Save the model every 5 epochs
+            torch.save({'epoch'               : epoch,
+                              'model_state_dict'    : model.state_dict(),
+                              'optimizer_G_state_dict': optimizer_G.state_dict(),
+                              'optimizer_D_state_dict': optimizer_D.state_dict(),
+                              'scheduler_G_state_dict': scheduler_G.state_dict(),
+                              'scheduler_D_state_dict': scheduler_D.state_dict(),
+                              }, os.path.join(checkpoint_dir, \
+                              '{}_{}_epoch{}.pth'.format(model.__class__.__name__, strftime("%a_%d%b%Y_%H%M%S",gmtime()), epoch)))   
    
     print("Training finished")
     wandb.finish()
    
 def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=5, help='Number of epochs')
+    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=10, help='Number of epochs')
     parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=False, help='Resume checkpoint or not')
     parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Tue_12Dec2023_171852_epoch10.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
-    
-    # parser.add_argument('--validation', '-v', dest='val', type=float,  default=10.0,
-    #                     help='Percent of the data that is used as validation (0-100)')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')
-    # parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
-    parser.add_argument('--learning_rate', '-l', metavar='LR',dest='lr', type=float, default=1e-5, help='Learning rate')    
+    parser.add_argument('--learning_rate_g', '-lg', metavar='LRG',dest='lrg', type=float, default=1e-4, help='Learning rate for Generator')    
+    parser.add_argument('--learning_rate_d', '-ld', metavar='LRD',dest='lrd', type=float, default=1e-5, help='Learning rate for Discriminator')    
     parser.add_argument('--lossl1weight', '-l1weight', metavar='L1W',dest='l1weight', type=float, default=1.0, help='L1 Loss Weight')    
     parser.add_argument('--losslpipsweight', '-lpipsweight', metavar='LPIPSW',dest='lpipsweight', type=float, default=1.0, help='LPIPS Loss Weight')    
     parser.add_argument('--lossadvweight', '-advweight', metavar='ADVW',dest='advweight', type=float, default=0.05, help='Adversarial Loss Weight')    
@@ -401,7 +386,8 @@ if __name__ == '__main__':
         device=device,
         epochs=args.epochs,
         batch_size=args.batch_size,
-        learning_rate=args.lr,
+        learning_rate_g=args.lrg,
+        learning_rate_d=args.lrd,
         l1_weight=args.l1weight,
         lpips_weight=args.lpipsweight,
         adv_weight =args.advweight,

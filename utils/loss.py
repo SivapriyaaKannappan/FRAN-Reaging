@@ -27,12 +27,12 @@ def computeGAN_GLoss(final_pred_img, disc_pred_img,target_img,l1_weight, lpips_w
     loss_g = criterion3(disc_pred_img,labels_true).mean()
     
     gen_loss = l1_weight*loss_l1 + lpips_weight*loss_lpips +adv_weight*loss_g 
-    return gen_loss
+    return gen_loss 
     
 def computeGAN_DLoss(disc_pred_img,disc_real_img1,disc_real_img2,target_age, age_ids):
     """Calculate loss for discriminator D"""
 
-    labels_false = torch.ones_like(disc_pred_img)
+    labels_false = torch.zeros_like(disc_pred_img)
     labels_true = torch.ones_like(disc_real_img1)
     
     loss_d1 = criterion3(disc_pred_img,labels_false).mean()

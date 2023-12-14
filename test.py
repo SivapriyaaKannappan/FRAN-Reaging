@@ -17,7 +17,6 @@ Discriminator - PatchGAN
 
 #Divided the RGB image by 255 and the input & target age by 100 in order to normalize
 #the image range to 0 and 1 before feeding to the model
-
 # Similarly after the training the predicted image will be between 0 and 1 
 
 import argparse
