@@ -55,7 +55,7 @@ optional arguments:
 
 ## Weights & Biases
 
-The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves, weights and gradient histograms, as well as predicted masks are logged to the platform.
+The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves are logged to the platform.
 
 When launching a training, a link will be printed in the console. Click on it to go to your dashboard. If you have an existing W&B account, you can link it
  by setting the `WANDB_API_KEY` environment variable. If not, it will create an anonymous run which is automatically deleted after 7 days.
@@ -66,11 +66,18 @@ When launching a training, a link will be printed in the console. Click on it to
 
 
 
-Github code is not released for this paper.
 
-Production-Ready Face Re-Aging for Visual Effects
-https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf
-
-https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects_Supplemental.pdf
-
-[U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+## Cite
+If you use this code, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
+```console
+@article{zoss2022production,
+  title={Production-Ready Face Re-Aging for Visual Effects},
+  author={Zoss, Gaspard and Chandran, Prashanth and Sifakis, Eftychios and Gross, Markus and Gotardo, Paulo and Bradley, Derek},
+  journal={ACM Transactions on Graphics (TOG)},
+  volume={41},
+  number={6},
+  pages={1--12},
+  year={2022},
+  publisher={ACM New York, NY, USA}
+}
+```
