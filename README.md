@@ -41,7 +41,8 @@ The RGB image along with the input and target age is fed as a 5 channel input to
 The PatchGAN discriminator is fed with 4 channel images such as predicted image+ correct target age, target synthetic image+ correct target age, target synthetic image+ incorrect target age, from which adversarial loss is calculated with their corresponding GT labels as False, True and False in order to minimize the discriminator's loss.
 
 ### Hyperparameters
-* Generator, Discriminator Learning Rate - 1e-04, 1e-05
+* Generator's Learning Rate - 1e-04
+* Discriminator Learning Rate - 1e-05
 * Scheduler
   * Step-size - 10
   * Gamma - 0.9
