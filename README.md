@@ -4,6 +4,7 @@
 - [Description](#description)
 - [Usage](#usage)
   - [Dataset & Training](#dataset--training)
+  - [Hyperparameter Values](#hyperparameter-values)
   - [Predictions](#predictions)
   - [Weights & Biases](#weights--biases)
   - [Pretrained model](#pretrained-model)
@@ -40,7 +41,7 @@ The training dataset is generated from StyleGAN2, which is fed into [SAM] (https
 The RGB image along with the input and target age is fed as a 5 channel input to the Generator model (U-Net). When the generator is trained, the discriminator is fixed and when the discriminator is trained, the generator is fixed. Combined losses such as L1 loss, LPIPS loss and Adversarial loss are used. The adversarial loss for the generator is calcualted using the BCEwithLogitsLoss of the predicted image and the GT label as True, so that the generator's loss is minimized and the generator could generate better images.<br>
 The PatchGAN discriminator is fed with 4 channel images such as predicted image+ correct target age, target synthetic image+ correct target age, target synthetic image+ incorrect target age, from which adversarial loss is calculated with their corresponding GT labels as False, True and False in order to minimize the discriminator's loss.
 
-### Hyperparameters
+### Hyperparameter Values 
 * Generator's Learning Rate - 1e-04
 * Discriminator Learning Rate - 1e-05
 * Scheduler
