@@ -19,7 +19,6 @@
 ```bash
 pip install -r requirements.txt
 ```
-
 4. Download the data 
 Input Samples are generated from StyleGAN2, which is fed into SAM Re-aging (https://github.com/yuval-alaluf/SAM), which inturn produces the output at different age categories ranging from 10 to 85.
 So, totally we have 2000 identities of 1024 X 1024 resolution for each category among 16 different age categories range from 10 to 85.
@@ -27,19 +26,12 @@ So, totally we have 2000 identities of 1024 X 1024 resolution for each category 
 5. Run training:
 ```console
 > python train.py 
-usage: train.py [--epochs E] [--batch-size B] [ --learning-rate LR]
 
 Train FRAN on input aged/de-aged images and output aged/de-aged images
-
-optional arguments:
---epochs E, -e E 		Number of epochs
---batch-size B, -b B		Batch Size
---learning-rate LR -l LR	Learning Rate
-
 ```
 
 ## Description
-
+[FRAN](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) (Face Re-Aging Network) is the fully automatic and production ready method for re-aging face images. The training dataset is generated from StyleGAN2, which is fed into [SAM] (https://github.com/yuval-alaluf/SAM), which inturn produces the output at different age categories ranging from 10 to 85. So, totally we generated 2000 identities of 1024 X 1024 resolution for each age category ranging from 10 to 85.
 
 ## Usage
 **Note : Use Python 3.6 or newer**
