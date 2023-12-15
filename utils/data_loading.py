@@ -84,24 +84,40 @@ class AgeBatchSampler(BatchSampler):
     Returns bacthes of size n_classes * n_sample_per_class """
     def __init__(self,n_age_ids, n_img_ids, n_classes_per_batch, n_samples_per_class):
         
-        self.n_classes = n_classes_per_batch    #1
-        self.n_samples = n_samples_per_class #8
-        self.batch_size = self.n_classes * self.n_samples # 1* 8 = 8 
+        self.n_classes_per_batch = n_classes_per_batch    #1
+        self.n_samples_per_class = n_samples_per_class #8
+        self.batch_size = self.n_classes_per_batch * self.n_samples_per_class # 1* 8 = 8 
         self.n_img_ids=n_img_ids
+        self.img_ids = np.arange(0, self.n_img_ids)
         self.n_age_ids=n_age_ids
         self.samples_count= self.n_img_ids * self.n_age_ids  # 10 * 3 = 30 (  # 2000 * 8 = 16,000)
-        self.total_sample_count = self.n_img_ids * self.n_samples  #Maximum possible image-pair combinations(2000 * 256 = 512,000)
+        self.total_sample_count = self.n_img_ids * self.n_age_ids  #Maximum possible image-pair combinations(2000 * 256 = 512,000)
        
         self.count=0
         
     def __iter__(self):
         self.count=0
-        start=0
-        while self.count+self.batch_size <= self.total_sample_count:   # Actual samples used
+        # start=0
+        permuted_img_ids = np.random.permutation(self.img_ids)
+        
+        while self.count + self.batch_size <= self.total_sample_count:   # Actual samples used
                 # samples=random.sample(range( self.samples_count), k=8) # Sample 8 integers/mini-batch that represent the matrix cells 
-                samples=random.choices(range(start, int(self.samples_count/self.n_img_ids)+start), k=self.batch_size) # Sample 8 integers/mini-batch from the same identity that represent the matrix cells 
-                start+=int(self.samples_count/self.n_img_ids)
-                self.count+=self.batch_size
+                # samples = random.choices(range(start, start + self.n_age_ids), k=self.batch_size) # Sample 8 integers/mini-batch from the same identity that represent the matrix cells 
+                # start += self.n_age_ids
+                sid = self.count // self.batch_size
+                sid = sid % self.n_img_ids
+                eid = sid + self.n_classes_per_batch
+                eid = eid % self.n_img_ids
+                if sid < eid:
+                    img_ids = permuted_img_ids[sid:eid].tolist()
+                else:
+                    img_ids = permuted_img_ids[sid:].tolist()
+                    img_ids += permuted_img_ids[:eid].tolist()
+                samples = []
+                for img_id in img_ids:
+                    sample = random.choices(range(img_id * self.n_age_ids, (img_id + 1) * self.n_age_ids), k=2)
+                    samples += sample
+                self.count += self.batch_size
                 yield samples
                          
     def __len__(self):  # Maximum possible combinations 
