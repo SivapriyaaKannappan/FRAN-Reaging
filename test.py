@@ -69,24 +69,17 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
             pred_img1 = model(input_img1) # returns RGB aging delta
             final_pred_img1=torch.add(pred_img1,disp_img1[0::2]) # Add the aging delta to the normalized input image
             
-            # # # # #**************************************************************
-            # # # # Visualizing the image output
-            # if (img_id1 == '1801' or img_id1 == '1802' or img_id1 == '1803' or img_id1 == '1804' or img_id1 == '1805'):
-            #     for i in range(pred_img1.size(0)):
-            #         slice_tensor=pred_img1[i, :, :, :]
-            #         slice_tensor=torch.clamp(slice_tensor, 0,1)
-            #         save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id1[0]}_{count}_{target_age1[i]}_modelout.png'))
-                
-            #         count+=1
-            #         # save_image(slice_tensor,os.path.join("./data/valid_vis/",f'{img_id1[0]}_{target_age1[i]}_modelout.png'))
-            # # # #**************************************************************
             # Prepare the real image and the predicted image variations (4 channel image) to the discriminator
             concat_pred_img1=torch.cat((final_pred_img1,final_age_matrix21[1::2]/100.0), 1) # Predicted img+target age (4 channel)
             concat_real_img11=torch.cat((target_img1,final_age_matrix21[1::2]/100.0), 1) # Synthetic Target image +target age (4 channel)
             # Find the incorrect target age matrix
             incorrect_age1=[]
             for k1, ta1 in enumerate(target_age1):
-                incorrect_age1+=random.sample([aid for i,aid in enumerate(age1) if aid !=target_age1[k1]],1)
+                sample_list=[aid for i,aid in enumerate(age1) if aid !=target_age1[k1]]
+                if (len(sample_list) == 0):
+                    incorrect_age1+=random.sample([aid for i,aid in enumerate(age1) if aid ==target_age1[k1]],1)
+                else:
+                    incorrect_age1+=random.sample(sample_list,1)
             incorrect_age_matrix1=[]
             for idx in range(len(incorrect_age1)):
                  incorrect_age_matrix1.append(torch.Tensor(img1.shape[2],img1.shape[3]).fill_(incorrect_age1[idx]/100.0))
@@ -124,7 +117,7 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Fri_08Dec2023_225708_epoch30.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Fri_15Dec2023_062248_epoch70.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', default="./resized_dataset/test/")
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")

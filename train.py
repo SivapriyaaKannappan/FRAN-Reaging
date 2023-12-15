@@ -104,8 +104,8 @@ def train_model(
     optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_d)
             
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=5)  
-    scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, step_size=3, gamma=0.1)  
-    scheduler_D = optim.lr_scheduler.StepLR(optimizer_D, step_size=3, gamma=0.1)  
+    scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, step_size=10, gamma=0.9)  
+    scheduler_D = optim.lr_scheduler.StepLR(optimizer_D, step_size=10, gamma=0.9)  
     
     # Resume Checkpoint
     if resume_checkpoint:
