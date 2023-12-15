@@ -1,13 +1,13 @@
 # FRAN: Face Re-Aging Network (Using U-Net in PyTorch)
 
--Quick Start (#quickstart)
+- [Quick Start] (#quick-start)
 - [Description](#description)
 - [Usage](#usage)
-  - [Training](#training)
-  - [Prediction](#prediction)
-- [Weights & Biases](#weights--biases)
-- [Pretrained model](#pretrained-model)
-- [Data](#data)
+  - [Dataset & Training](#dataset--training)
+  - [Predictions](#predictions)
+  - [Weights & Biases](#weights--biases)
+  - [Pretrained model](#pretrained-model)
+- [Cite](#cite)
 
 ## Quick start
 1. [Install CUDA](https://developer.nvidia.com/cuda-downloads)
@@ -28,26 +28,28 @@ Train FRAN on input aged/de-aged images and target aged/de-aged images by finetu
 
 5. Run testing:
    ```console
-   >python test.py
+   > python test.py
    ```
 
 ## Description
 [FRAN](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) (Face Re-Aging Network) is the fully automatic and production ready method for re-aging face images. 
 
+## Usage 
+__________________________________________________________
 ### Dataset & Training
 The training dataset is generated from StyleGAN2, which is fed into [SAM] (https://github.com/yuval-alaluf/SAM), which inturn produces the output at different age categories (among 16 different age categories) ranging from 10 to 85. So, totally we generated 2000 identities of 1024 X 1024 resolution for each age category ranging from 10 to 85. Here U-Net is used for this image-to-image translation task.
 The RGB image along with the input and target age is fed as a 5 channel input to the Generator model (U-Net). When the generator is trained, the discriminator is fixed and when the discriminator is trained, the generator is fixed. Combined losses such as L1 loss, LPIPS loss and Adversarial loss are used, so that the generator could generate better images. The adversarial loss for the generator is calcualted using the BCEwithLogitsLoss of the predicted image and the GT label as True, so that the generator's loss is minimized. 
 The PatchGAN discriminator is fed with 4 channel images such as predicted image+ correct target age, target synthetic image+ correct target age, target synthetic image+ incorrect target age is passed with their target labels as False, True and False. Also the adversarial loss for the discriminator is calcualted using the BCEwithLogitsLoss of the predicted image and the GT label as False, so that the discriminator's loss is minimized.
 
-## Weights & Biases
+### Weights & Biases
 The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves are logged to the platform.
 When launching a training, a link will be printed in the console. Click on it to go to your dashboard. If you have an existing W&B account, you can link it
 by setting the `WANDB_API_KEY` environment variable. If not, it will create an anonymous run which is automatically deleted after 7 days.
 
-### Prediction
+### Predictions
 For a given image along with the input age and target age, the program will output a re-aged face image based on the target age.
 
-## Pretrained model
+### Pretrained model
 
 
 ## Cite
