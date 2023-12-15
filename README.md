@@ -34,7 +34,8 @@ Train FRAN on input aged/de-aged images and target aged/de-aged images by finetu
 ## Description
 [FRAN](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) (Face Re-Aging Network) is the fully automatic and production ready method for re-aging face images. 
 
-## Usage___
+## Usage
+___
 ### Dataset & Training
 The training dataset is generated from StyleGAN2, which is fed into [SAM] (https://github.com/yuval-alaluf/SAM), which inturn produces the output at different age categories (among 16 different age categories) ranging from 10 to 85. So, totally we generated 2000 identities of 1024 X 1024 resolution for each age category ranging from 10 to 85. Here U-Net is used for this image-to-image translation task.
 The RGB image along with the input and target age is fed as a 5 channel input to the Generator model (U-Net). When the generator is trained, the discriminator is fixed and when the discriminator is trained, the generator is fixed. Combined losses such as L1 loss, LPIPS loss and Adversarial loss are used, so that the generator could generate better images. The adversarial loss for the generator is calcualted using the BCEwithLogitsLoss of the predicted image and the GT label as True, so that the generator's loss is minimized. 
