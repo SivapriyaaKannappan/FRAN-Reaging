@@ -50,7 +50,7 @@ For a given image along with the input age and target age, the program will outp
 
 ### Pretrained model
 
-___
+
 ## Cite
 If you use this code, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
 ```console
