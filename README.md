@@ -9,7 +9,7 @@
   - [Pretrained model](#pretrained-model)
 - [Cite](#cite)
 
-## Quick start
+## Quick Start
 1. [Install CUDA](https://developer.nvidia.com/cuda-downloads)
 2. [Install PyTorch 1.13 or later](https://pytorch.org/get-started/locally/)
 3. Install dependencies
