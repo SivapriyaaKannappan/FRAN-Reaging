@@ -1,6 +1,6 @@
 # FRAN: Face Re-Aging Network (Using U-Net in PyTorch)
 
-- [Quick Start] (#quick-start)
+- [Quick Start](#quick-start)
 - [Description](#description)
 - [Usage](#usage)
   - [Dataset & Training](#dataset--training)
