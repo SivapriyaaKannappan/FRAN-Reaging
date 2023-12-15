@@ -22,12 +22,14 @@ So, totally we have 2000 identities of 1024 X 1024 resolution for each age categ
 
 5. Run training:
 ```console
-> python train.py 
-Train FRAN on input aged/de-aged images and target aged/de-aged images by finetuning the paramaeters such as Generator's & Discriminator's learning rate and step-size & gamma value in the scheduler.
+> python train.py
 ```
+Train FRAN on input aged/de-aged images and target aged/de-aged images by finetuning the paramaeters such as Generator's & Discriminator's learning rate and step-size & gamma value in the scheduler.
+
 5. Run testing:
    ```console
    >python test.py
+   ```
 
 ## Description
 [FRAN](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) (Face Re-Aging Network) is the fully automatic and production ready method for re-aging face images. 
