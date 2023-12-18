@@ -59,13 +59,13 @@ When launching a training, a link will be printed in the console. Click on it to
 by setting the `WANDB_API_KEY` environment variable. If not, it will create an anonymous run which is automatically deleted after 7 days.
 
 ### Predictions
-*Input/Target/Predictions <br />
-70->25 ![1823_iage_70_tage_25_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/1c8895cb-0920-45fb-8f98-9f0d5d47a4f3)
-55->80 ![1832_iage_55_tage_80_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/30c27636-d656-4643-8737-2b1315c042e4)
-85->40 ![1839_iage_85_tage_40_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/9069869a-8385-4d12-b0df-1331203bca4a)
-60->20 ![1911_iage_60_tage_20_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/d2b85df8-4cbc-4a44-9e5d-ed21f71a3c87)
-75->35 ![1813_iage_75_tage_35_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/d2f7651f-3647-4e57-8bb2-8870d418b5bf)
-70->30 ![1955_iage_70_tage_30_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/f0b71685-cefd-4287-b7d7-d4b67311d262)
+Output in the form of Input/Target/Predictions <br />
+70->25 ![1823_iage_70_tage_25_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/1c8895cb-0920-45fb-8f98-9f0d5d47a4f3) <br />
+55->80 ![1832_iage_55_tage_80_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/30c27636-d656-4643-8737-2b1315c042e4) <br />
+85->40 ![1839_iage_85_tage_40_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/9069869a-8385-4d12-b0df-1331203bca4a) <br />
+60->20 ![1911_iage_60_tage_20_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/d2b85df8-4cbc-4a44-9e5d-ed21f71a3c87) <br />
+75->35 ![1813_iage_75_tage_35_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/d2f7651f-3647-4e57-8bb2-8870d418b5bf) <br />
+70->30 ![1955_iage_70_tage_30_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/f0b71685-cefd-4287-b7d7-d4b67311d262) <br />
 
 ### Pretrained model
 
