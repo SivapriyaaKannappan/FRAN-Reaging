@@ -84,22 +84,22 @@ class AgeBatchSampler(BatchSampler):
     Returns bacthes of size n_classes * n_sample_per_class """
     def __init__(self,n_age_ids, n_img_ids, n_classes_per_batch, n_samples_per_class):
         
-        self.n_classes_per_batch = n_classes_per_batch    #1
-        self.n_samples_per_class = n_samples_per_class #8
-        self.batch_size = self.n_classes_per_batch * self.n_samples_per_class # 1* 8 = 8 
+        self.n_classes_per_batch = n_classes_per_batch    #4
+        self.n_samples_per_class = n_samples_per_class #2
+        self.batch_size = self.n_classes_per_batch * self.n_samples_per_class # 4 * 2 = 8 
         self.n_img_ids=n_img_ids
         self.img_ids = np.arange(0, self.n_img_ids)
         self.n_age_ids=n_age_ids
-        self.samples_count= self.n_img_ids * self.n_age_ids  # 10 * 3 = 30 (  # 2000 * 8 = 16,000)
-        self.total_sample_count = self.n_img_ids * self.n_age_ids  #Maximum possible image-pair combinations(2000 * 256 = 512,000)
+        # self.samples_count= self.n_img_ids * self.n_age_ids  # 1400 * 16 = 22,400
+        self.total_sample_count = self.n_img_ids * self.n_age_ids  #Maximum possible image-pair combinations (1400 * 16 = 22,400)
        
         self.count=0
         
     def __iter__(self):
         self.count=0
         # start=0
-        permuted_img_ids = np.random.permutation(self.img_ids)
-        
+        permuted_img_ids = np.random.permutation(self.img_ids) # image ids are shuffled every epoch
+        # while self.count + self.batch_size <= self.n_img_ids * self.batch_size:   # For testing
         while self.count + self.batch_size <= self.total_sample_count:   # Actual samples used
                 # samples=random.sample(range( self.samples_count), k=8) # Sample 8 integers/mini-batch that represent the matrix cells 
                 # samples = random.choices(range(start, start + self.n_age_ids), k=self.batch_size) # Sample 8 integers/mini-batch from the same identity that represent the matrix cells 
@@ -124,7 +124,5 @@ class AgeBatchSampler(BatchSampler):
         # n_batch = self.total_samples_count // self.batch_size  # 512,000 / 8 = 64,000 iterations
         n_batch = self.total_sample_count // self.batch_size  # 16,000 / 8 = 2000 iterations
         return n_batch
-
-
 
 
