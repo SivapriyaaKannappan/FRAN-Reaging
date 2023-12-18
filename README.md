@@ -59,8 +59,7 @@ When launching a training, a link will be printed in the console. Click on it to
 by setting the `WANDB_API_KEY` environment variable. If not, it will create an anonymous run which is automatically deleted after 7 days.
 
 ### Predictions
-Input/Target/Predictions 
-
+*Input/Target/Predictions <br />
 70->25 ![1823_iage_70_tage_25_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/1c8895cb-0920-45fb-8f98-9f0d5d47a4f3)
 55->80 ![1832_iage_55_tage_80_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/30c27636-d656-4643-8737-2b1315c042e4)
 85->40 ![1839_iage_85_tage_40_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/9069869a-8385-4d12-b0df-1331203bca4a)
