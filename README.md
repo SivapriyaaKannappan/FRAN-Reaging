@@ -50,7 +50,7 @@ The PatchGAN discriminator is fed with 4 channel images such as predicted image+
 * Mini-batch size
   * No of identities per mini-batch - 4
   * No of samples per identity - 2
-
+* In the Sampler, for every epoch, the image identities are permuted to shuffle their order
 ### Weights & Biases
 The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves are logged to the platform.
 When launching a training, a link will be printed in the console. Click on it to go to your dashboard. If you have an existing W&B account, you can link it
