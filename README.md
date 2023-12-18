@@ -37,8 +37,10 @@ Train FRAN on input aged/de-aged images and target aged/de-aged images by finetu
 
 ## Usage
 ### Dataset & Training
-The training dataset is generated from StyleGAN2, which is fed into [SAM] (https://github.com/yuval-alaluf/SAM), which inturn produces the output at different age categories (among 16 different age categories) ranging from 10 to 85. So, totally we generated 2000 identities of 1024 X 1024 resolution for each age category ranging from 10 to 85. Here U-Net is used for this image-to-image translation task.<br>
-The RGB image along with the input and target age is fed as a 5 channel input to the Generator model (U-Net). When the generator is trained, the discriminator is fixed and when the discriminator is trained, the generator is fixed. Combined losses such as L1 loss, LPIPS loss and Adversarial loss are used. The adversarial loss for the generator is calcualted using the BCEwithLogitsLoss of the predicted image and the GT label as True, so that the generator's loss is minimized and the generator could generate better images.<br>
+The training dataset is generated from StyleGAN2, which is fed into [SAM] (https://github.com/yuval-alaluf/SAM), which inturn produces the output at different age categories (among 16 different age categories) ranging from 10 to 85. So, totally we generated 2000 identities of 1024 X 1024 resolution for each age category ranging from 10 to 85 in which 1400, 400 and 200 identities are used for training, validation and testing respectively. Considering the efficiency, for initial training we resized the images to 256 X 256. For an identity, the images are stored across all the 16 different age categories, so for 2000 identities in total with 16 age categories, we have 32,000 images in the dataset. While constructing the dataset class and sampler class, the dataset is viewed as a matrix of rows and columns and the calculations are carried out. Here U-Net is used for this image-to-image translation task.<br />
+
+The RGB image along with the input and target age is fed as a 5 channel input to the Generator model (U-Net). When the generator is trained, the discriminator is fixed and when the discriminator is trained, the generator is fixed. Combined losses such as L1 loss, LPIPS loss and Adversarial loss are used. The adversarial loss for the generator is calcualted using the BCEwithLogitsLoss of the predicted image and the GT label as True, so that the generator's loss is minimized and the generator could generate better images.<br />
+
 The PatchGAN discriminator is fed with 4 channel images such as predicted image+ correct target age, target synthetic image+ correct target age, target synthetic image+ incorrect target age, from which adversarial loss is calculated with their corresponding GT labels as False, True and False in order to minimize the discriminator's loss.
 For a given image along with the input age and target age, the program will output a re-aged face image based on the target age.
 ### Hyperparameter Values 
@@ -47,11 +49,13 @@ For a given image along with the input age and target age, the program will outp
 * Generator's Learning Rate - 1e-04
 * Discriminator Learning Rate - 1e-05
 * Scheduler
-  * Step-size - 10
+  * Step-size - 5
   * Gamma - 0.9
 * Mini-batch size - 8
   * No of identities per mini-batch - 4
   * No of samples per identity - 2
+* Total sample count - No. of img_ids * No. of age_ids = 1400 * 16 = 22,400
+Training * Iterations - 22,400/8 = 2800 iterations
 * In the Sampler, for every epoch, the image identities are permuted to shuffle their order
 ### Weights & Biases
 The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves are logged to the platform.
@@ -69,7 +73,7 @@ Output in the form of Input/Target/Predictions <br />
 20->70 ![1920_iage_20_tage_70_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/4a5870c8-e968-4b85-8f2a-f6c1b81a40f5)
 
 ### Pretrained model
-Please download the pretrained model of FRAN from [here](https://drive.google.com/file/d/1Az23CdF--65rOAYULrIl1voxYCL9Kr8G/view?usp=drive_link)
+Please download the pretrained model of FRAN for 256 X 256 images from [here](https://drive.google.com/file/d/1Az23CdF--65rOAYULrIl1voxYCL9Kr8G/view?usp=drive_link).
 
 ### Testing
 Having trained your model or if you're using a pretrained FRAN model, you can use test_single_image.py to run inference on a given image.
