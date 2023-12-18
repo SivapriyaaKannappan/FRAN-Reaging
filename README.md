@@ -73,7 +73,7 @@ Output in the form of Input/Target/Predictions <br />
 70->30 ![1955_iage_70_tage_30_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/f0b71685-cefd-4287-b7d7-d4b67311d262) <br />
 
 ### Pretrained model
-
+The pretrained model is saved at checkpoints/UNet_Sat_16Dec2023_151230_epoch100.pth
 
 ## Cite
 If you use this code, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
