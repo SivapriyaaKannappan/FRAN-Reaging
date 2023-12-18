@@ -8,7 +8,7 @@
   - [Predictions](#predictions)
   - [Weights & Biases](#weights--biases)
   - [Pretrained model](#pretrained-model)
-- [Cite](#cite)
+- [Citation](#citation)
 
 ## Quick Start
 1. [Install CUDA](https://developer.nvidia.com/cuda-downloads)
@@ -73,10 +73,13 @@ Output in the form of Input/Target/Predictions <br />
 70->30 ![1955_iage_70_tage_30_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/f0b71685-cefd-4287-b7d7-d4b67311d262) <br />
 
 ### Pretrained model
-The pretrained model is saved at checkpoints/UNet_Sat_16Dec2023_151230_epoch100.pth
+Please download the pretrained model of FRAN from [here](https://drive.google.com/file/d/1Az23CdF--65rOAYULrIl1voxYCL9Kr8G/view?usp=drive_link)
 
-## Cite
-If you use this code, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
+### Testing
+Having trained your model or if you're using a pretrained FRAN model, you can use test_single_image.py to run inference on a given image.
+
+## Citation
+If you use this code for your research, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
 ```console
 @article{zoss2022production,
   title={Production-Ready Face Re-Aging for Visual Effects},
