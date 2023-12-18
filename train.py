@@ -92,8 +92,8 @@ def train_model(
     # train_cls, valid_cls =  dataset.img_ids[:split], dataset.img_ids[split:]
     # print ("Training and Validation Split:", train_cls, valid_cls)
     # 3. Create samplers
-    train_sampler=AgeBatchSampler(train_dataset.n_age_ids,n_img_ids=train_dataset.n_img_ids, n_classes_per_batch=1, n_samples_per_class=batch_size)
-    val_sampler=AgeBatchSampler(val_dataset.n_age_ids,n_img_ids=val_dataset.n_img_ids, n_classes_per_batch=1, n_samples_per_class=batch_size)
+    train_sampler=AgeBatchSampler(train_dataset.n_age_ids,n_img_ids=train_dataset.n_img_ids, n_classes_per_batch=batch_size//2, n_samples_per_class=2)
+    val_sampler=AgeBatchSampler(val_dataset.n_age_ids,n_img_ids=val_dataset.n_img_ids, n_classes_per_batch=batch_size//2, n_samples_per_class=2)
     
     # 4. Create data loaders
     train_dataloader=DataLoader(dataset=train_dataset,batch_sampler=train_sampler,shuffle=False)
@@ -104,8 +104,8 @@ def train_model(
     optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_d)
             
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=5)  
-    scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, step_size=10, gamma=0.9)  
-    scheduler_D = optim.lr_scheduler.StepLR(optimizer_D, step_size=10, gamma=0.9)  
+    scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, step_size=5, gamma=0.9)  
+    scheduler_D = optim.lr_scheduler.StepLR(optimizer_D, step_size=5, gamma=0.9)  
     
     # Resume Checkpoint
     if resume_checkpoint:
@@ -139,7 +139,8 @@ def train_model(
        
     ''')
     
-    count=0
+    n_iter = 0
+    count = 0
    
     # # 6. Begin training
     for epoch in range(start_epoch, epochs + 1):
@@ -230,6 +231,7 @@ def train_model(
             # print("=============")
             # Empty CUDA cache
             torch.cuda.empty_cache()
+            n_iter += 1
         total_train_loss=train_gloss+train_dloss
         average_train_loss=total_train_loss/len(train_dataloader)
         experiment.log({
@@ -261,6 +263,7 @@ def train_model(
                 final_age_matrix21=final_age_matrix11.to(device)
                 input_img1=torch.cat((img1[0::2]/255.0,final_age_matrix21[0::2]/100.0,final_age_matrix21[1::2]/100.0), 1) # i/p img+i/p age+target age
                 target_img1=img1[1::2]/255.0
+                source_age1 = age1[0::2]
                 target_age1=age1[1::2]
                
                 input_img1=input_img1.to(device)
@@ -270,20 +273,27 @@ def train_model(
                 
                 # # # #**************************************************************
                 # # # Visualizing the image output
-                if (img_id1[0] == '1411' or img_id1[0] == '1412' or img_id1[0] == '1413' or img_id1[0] == '1414' or img_id1[0] == '1415'):
-                    # minVal=pred_img1.min()
-                    # maxVal=pred_img1.max()
-                    # vis_pred_img1=pred_img1-minVal/maxVal-minVal
-                    
-                    for i in range(pred_img1.size(0)):
+                for i, img_id in enumerate(img_id1[::2]):
+                    if img_id in ['1411', '1412', '1413', '1414', '1415']:
+                        # minVal=pred_img1.min()
+                        # maxVal=pred_img1.max()
+                        # vis_pred_img1=pred_img1-minVal/maxVal-minVal
+                        offset_img = pred_img1[i, ...]
+                        minval = offset_img.min()
+                        maxval = offset_img.max()
+                        offset_img = (offset_img - minval) / (maxval - minval + 1e-10)
+                        save_image(offset_img, os.path.join("./results/vis_offset/",f'{img_id}_{count}_{source_age1[i]}_{target_age1[i]}_offset.png'))                        
+                        
                         # slice_tensor=pred_img1[i, :, :, :]
                         # slice_tensor=vis_pred_img1[i, :, :, :]
                         slice_tensor=final_pred_img1[i, :, :, :]
                         # slice_tensor=torch.clamp(slice_tensor, 0,1)
-                        save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id1[0]}_{count}_{target_age1[i]}_modelout.png'))
+                        save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id}_{count}_{source_age1[i]}_{target_age1[i]}_modelout.png'))
                     
                         count+=1
                         # save_image(slice_tensor,os.path.join("./data/valid_vis/",f'{img_id1[0]}_{target_age1[i]}_modelout.png'))
+                
+                
                 # # #**************************************************************
                 
                 # Prepare the real image and the predicted image variations (4 channel image) to the discriminator
@@ -349,8 +359,8 @@ def train_model(
 def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=100, help='Number of epochs')
-    parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=True, help='Resume checkpoint or not')
-    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Tue_12Dec2023_171852_epoch10.pth", help='Name of the checkpoint file')
+    parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=False, help='Resume checkpoint or not')
+    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Thu_14Dec2023_164648_epoch10.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
