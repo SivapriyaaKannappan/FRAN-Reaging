@@ -66,11 +66,7 @@ Output in the form of Input/Target/Predictions <br />
 
 85->40 ![1839_iage_85_tage_40_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/9069869a-8385-4d12-b0df-1331203bca4a) <br />
 
-60->20 ![1911_iage_60_tage_20_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/d2b85df8-4cbc-4a44-9e5d-ed21f71a3c87) <br />
-
-75->35 ![1813_iage_75_tage_35_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/d2f7651f-3647-4e57-8bb2-8870d418b5bf) <br />
-
-70->30 ![1955_iage_70_tage_30_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/f0b71685-cefd-4287-b7d7-d4b67311d262) <br />
+20->70 ![1920_iage_20_tage_70_modelout](https://github.com/SivapriyaaKannappan/FRAN-Reaging/assets/14826726/4a5870c8-e968-4b85-8f2a-f6c1b81a40f5)
 
 ### Pretrained model
 Please download the pretrained model of FRAN from [here](https://drive.google.com/file/d/1Az23CdF--65rOAYULrIl1voxYCL9Kr8G/view?usp=drive_link)
