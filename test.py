@@ -117,7 +117,7 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Fri_15Dec2023_062248_epoch70.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/FRAN_UNet_Sat_16Dec2023_151230_epoch100.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', default="./resized_dataset/test/")
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
