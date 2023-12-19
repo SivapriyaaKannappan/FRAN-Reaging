@@ -29,6 +29,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import BatchSampler
 # from itertools import product # cartesian product
 import random
+import dlib
+from utils.align_all_parallel import align_face
 
 class AgeDataset(Dataset):
     def __init__(self, images_dir):

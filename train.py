@@ -26,6 +26,7 @@ import wandb
 from pathlib import Path
 from utils.data_loading import AgeDataset, AgeBatchSampler
 import wandb
+import dlib
 import torch.optim as optim
 from unet import UNet
 from tqdm import tqdm
@@ -36,6 +37,8 @@ from torch.utils.data import DataLoader
 from utils.loss import computeGAN_GLoss, computeGAN_DLoss
 from patch_gan_discriminator import PatchGANDiscriminator
 from torchvision.utils import save_image
+
+
 train_images_dir=Path('./resized_dataset/train/')
 val_images_dir=Path('./resized_dataset/val/')
 test_images_dir=Path('./resized_dataset/test/')
@@ -43,6 +46,8 @@ test_images_dir=Path('./resized_dataset/test/')
 # val_images_dir=Path('./data/val/')
 # test_images_dir=Path('./data/test/')
 checkpoint_dir=Path('./checkpoints/')
+
+
 def set_requires_grad(nets, requires_grad=False):
         """Set requies_grad=False for all the networks to avoid unnecessary computations
         Parameters:
@@ -55,6 +60,15 @@ def set_requires_grad(nets, requires_grad=False):
             if net is not None:
                 for param in net.parameters():
                     param.requires_grad = requires_grad
+
+# def run_alignment(image_path):
+#     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+#     aligned_image = align_face(filepath=image_path, predictor=predictor)
+#     print("Aligned image has shape: {}".format(aligned_image.size))
+#     return aligned_image
+
+
+
     
 def train_model(
         model,
@@ -358,6 +372,8 @@ def train_model(
    
 def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
+    # parser.add_argument('--num_threads', type=int, default=1)
+    
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=2, help='Number of epochs')
     parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=False, help='Resume checkpoint or not')
     parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Thu_14Dec2023_164648_epoch10.pth", help='Name of the checkpoint file')
@@ -397,6 +413,7 @@ if __name__ == '__main__':
         l1_weight=args.l1weight,
         lpips_weight=args.lpipsweight,
         adv_weight =args.advweight,
-        resume_checkpoint=args.resume
+        resume_checkpoint=args.resume,
+        
         )
    

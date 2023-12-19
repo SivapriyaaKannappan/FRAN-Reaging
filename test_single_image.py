@@ -37,21 +37,32 @@ from PIL import Image
 import random
 from torchvision.utils import save_image
 import torchvision.transforms as transforms
+import dlib
+from utils.align_all_parallel import align_face
+
+def run_alignment(image_path):
+    predictor = dlib.shape_predictor("D:/libraries/dlib-master/shape_predictor_68_face_landmarks.dat")
+    aligned_image = align_face(filepath=image_path, predictor=predictor)
+    print("Aligned image has shape: {}".format(aligned_image.size))
+    return aligned_image
+
 def test_model(model,discriminator,inputimg_path,targetimg_path,input_age,target_age,output,batch_size,l1_weight: float = 1.0, lpips_weight: float =1.0, adv_weight: float = 0.05):   
             # image to a Torch tensor 
             transform = transforms.Compose([transforms.PILToTensor()]) 
 
             img_id=inputimg_path.split(".",2)[1].split("/",4)[-1]
-            img=Image.open(inputimg_path)
-            img=transform(img) # image to tensor
+            aligned_img=run_alignment(inputimg_path)
+            # img=Image.open(inputimg_path)
+            img=transform(aligned_img) # image to tensor
             if (img.shape[0] > 3):
                 img=img[:3,:,:]
             img=img.unsqueeze(0)
             img=img.to(device)
             
             if (targetimg_path != None):
-                timg=Image.open(targetimg_path)
-                timg=transform(timg) # image to tensor
+                aligned_timg=run_alignment(targetimg_path)
+                # timg=Image.open(targetimg_path)
+                timg=transform(aligned_timg) # image to tensor
                 timg=timg.unsqueeze(0)
                 timg=timg.to(device)
                 
@@ -89,9 +100,9 @@ def get_args():
     # parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
     # parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
     # parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default="./resized_dataset/test/75/1845.jpg")
-    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="Prishi.jpg")
-    parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=11)
-    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
+    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="D:/REVEAL/test_images/c2.png")
+    parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=20)
+    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=60)
     parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default=None)
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=2, help='Size of the mini-batch')
