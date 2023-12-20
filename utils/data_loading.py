@@ -73,7 +73,7 @@ class AgeDataset(Dataset):
         age=self.agetoind[age_idx]
         self.img_path = os.path.join(str(self.images_dir),self.age_ids[age_idx],self.img_ids[img_idx]).replace("\\", '/')+'.jpg'
         img=Image.open(self.img_path)
-        img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS)
+        img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS) # resize the image
         # img.save(os.path.join("./data/valid_vis/","test.png"))
         img=np.array(img)
         return img,img_id, age
