@@ -8,7 +8,12 @@ results/
 __pycache__
 */**/__pycache__
 
+
+input/
+output/
+
 Sampling image pairs based on age categories.py
+model_convert2onnx_FRAN.py
 
 *.jpg
 *.png

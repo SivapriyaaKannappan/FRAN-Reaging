@@ -43,7 +43,7 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
             # image to a Torch tensor 
             transform = transforms.Compose([transforms.PILToTensor()]) 
 
-            img_id=inputimg_path.split(".",2)[1].split("/",4)[-1]
+            img_id=inputimg_path.split(".",2)[0].split("/",4)[-1]
             aligned_img=run_alignment(inputimg_path) # face image aligned similar to SAM (via dlib)
             # img=Image.open(inputimg_path)
             img=transform(aligned_img) # image to tensor
