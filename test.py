@@ -19,6 +19,8 @@ Discriminator - PatchGAN
 #the image range to 0 and 1 before feeding to the model
 # Similarly after the training the predicted image will be between 0 and 1 
 
+#Since the training images are from SAM, the test images are aligned similar to SAM using dlib.
+
 import argparse
 import os
 import sys
@@ -35,6 +37,7 @@ from patch_gan_discriminator import PatchGANDiscriminator
 from PIL import Image
 import random
 from torchvision.utils import save_image
+   
 def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float = 0.3, lpips_weight: float =0.3, adv_weight: float = 0.4):   
     # 1. Create dataset
     test_dataset=AgeDataset(test_input) 
@@ -119,7 +122,7 @@ def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
     parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/FRAN_UNet_Sat_16Dec2023_151230_epoch100.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
-    parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', default="./resized_dataset/test/")
+    parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', default="./dataset/test/")
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=2, help='Size of the mini-batch')
     parser.add_argument('--lossl1weight', '-l1weight', metavar='L1W',dest='l1weight', type=float, default=1.0, help='L1 Loss Weight')    

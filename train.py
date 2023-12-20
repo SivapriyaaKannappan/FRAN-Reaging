@@ -19,34 +19,23 @@ import argparse
 import logging
 import os
 # os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb=512'
-import sys
 import torch
-import torch.nn as nn
 import wandb
 from pathlib import Path
 from utils.data_loading import AgeDataset, AgeBatchSampler
-import wandb
-import dlib
 import torch.optim as optim
 from unet import UNet
-from tqdm import tqdm
-import numpy as np
 import random
 from time import gmtime, strftime
 from torch.utils.data import DataLoader
 from utils.loss import computeGAN_GLoss, computeGAN_DLoss
 from patch_gan_discriminator import PatchGANDiscriminator
 from torchvision.utils import save_image
+from PIL import Image
 
-
-train_images_dir=Path('./resized_dataset/train/')
-val_images_dir=Path('./resized_dataset/val/')
-test_images_dir=Path('./resized_dataset/test/')
-# train_images_dir=Path('./data/train/')
-# val_images_dir=Path('./data/val/')
-# test_images_dir=Path('./data/test/')
+train_images_dir=Path('./dataset/train/')
+val_images_dir=Path('./dataset/val/')
 checkpoint_dir=Path('./checkpoints/')
-
 
 def set_requires_grad(nets, requires_grad=False):
         """Set requies_grad=False for all the networks to avoid unnecessary computations
@@ -61,14 +50,6 @@ def set_requires_grad(nets, requires_grad=False):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-# def run_alignment(image_path):
-#     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-#     aligned_image = align_face(filepath=image_path, predictor=predictor)
-#     print("Aligned image has shape: {}".format(aligned_image.size))
-#     return aligned_image
-
-
-
     
 def train_model(
         model,
@@ -82,7 +63,8 @@ def train_model(
         l1_weight: float = 1.0,
         lpips_weight: float =1.0,
         adv_weight: float = 0.05,
-        resume_checkpoint=False
+        resume_checkpoint=False,
+        img_scale=256
         ):
     #**********************************************************
     #Toy dataset testing
@@ -98,8 +80,9 @@ def train_model(
     #**********************************************************
     
     # 1. Create dataset
-    train_dataset=AgeDataset(train_images_dir) 
-    val_dataset=AgeDataset(val_images_dir) 
+      
+    train_dataset=AgeDataset(train_images_dir,img_scale) 
+    val_dataset=AgeDataset(val_images_dir,img_scale) 
     # 2. Split into train / validation partitions
     # train_percent=1-val_percent
     # split=int(np.floor(train_percent * dataset.n_img_ids))
@@ -384,7 +367,9 @@ def get_args():
     parser.add_argument('--learning_rate_d', '-ld', metavar='LRD',dest='lrd', type=float, default=1e-5, help='Learning rate for Discriminator')    
     parser.add_argument('--lossl1weight', '-l1weight', metavar='L1W',dest='l1weight', type=float, default=1.0, help='L1 Loss Weight')    
     parser.add_argument('--losslpipsweight', '-lpipsweight', metavar='LPIPSW',dest='lpipsweight', type=float, default=1.0, help='LPIPS Loss Weight')    
-    parser.add_argument('--lossadvweight', '-advweight', metavar='ADVW',dest='advweight', type=float, default=0.05, help='Adversarial Loss Weight')    
+    parser.add_argument('--lossadvweight', '-advweight', metavar='ADVW',dest='advweight', type=float, default=0.05, help='Adversarial Loss Weight')   
+    parser.add_argument('--trainpercent', '-trainpercent', dest='trainpercent', type=float, default=0.7, help='Train Percentage')    
+       
     return parser.parse_args()
 
 
@@ -401,6 +386,7 @@ if __name__ == '__main__':
     discriminator = PatchGANDiscriminator(in_channels=4) # RGB Image + target age (4 channel)
     discriminator.to(device=device)
     
+    
     train_model(
         model=model,
         discriminator=discriminator,
@@ -414,6 +400,6 @@ if __name__ == '__main__':
         lpips_weight=args.lpipsweight,
         adv_weight =args.advweight,
         resume_checkpoint=args.resume,
-        
+        img_scale=args.imgscale
         )
    

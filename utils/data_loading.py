@@ -33,14 +33,14 @@ import dlib
 from utils.align_all_parallel import align_face
 
 class AgeDataset(Dataset):
-    def __init__(self, images_dir):
+    def __init__(self, images_dir,img_scale):
         self.images_dir=images_dir
         self.age_ids=os.listdir(images_dir)
         self.img_ids=[img_name.split('.')[0] for img_name in sorted(os.listdir(str(images_dir)+'/'+self.age_ids[0])) ]
         self.n_img_ids = len(self.img_ids)
         self.n_age_ids = len(self.age_ids)
         self.tot_imgs =  self.n_img_ids * self.n_age_ids
-        
+        self.img_scale=img_scale
         # Image to indices 
         imgtoind={}
         for imgidx in range(self.n_img_ids ):
@@ -73,9 +73,10 @@ class AgeDataset(Dataset):
         age=self.agetoind[age_idx]
         self.img_path = os.path.join(str(self.images_dir),self.age_ids[age_idx],self.img_ids[img_idx]).replace("\\", '/')+'.jpg'
         img=Image.open(self.img_path)
+        img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS)
         # img.save(os.path.join("./data/valid_vis/","test.png"))
         img=np.array(img)
-        return img, img_id, age
+        return img,img_id, age
         
     def __len__(self):
         return self.n_age_ids * self.n_img_ids # 3 * 10 = 30 images (16 * 2000 = 32,000 images available in the dataset)
