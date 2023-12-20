@@ -83,20 +83,16 @@ def train_model(
       
     train_dataset=AgeDataset(train_images_dir,img_scale) 
     val_dataset=AgeDataset(val_images_dir,img_scale) 
-    # 2. Split into train / validation partitions
-    # train_percent=1-val_percent
-    # split=int(np.floor(train_percent * dataset.n_img_ids))
-    # train_cls, valid_cls =  dataset.img_ids[:split], dataset.img_ids[split:]
-    # print ("Training and Validation Split:", train_cls, valid_cls)
-    # 3. Create samplers
+
+    # 2. Create samplers
     train_sampler=AgeBatchSampler(train_dataset.n_age_ids,n_img_ids=train_dataset.n_img_ids, n_classes_per_batch=batch_size//2, n_samples_per_class=2)
     val_sampler=AgeBatchSampler(val_dataset.n_age_ids,n_img_ids=val_dataset.n_img_ids, n_classes_per_batch=batch_size//2, n_samples_per_class=2)
     
-    # 4. Create data loaders
+    # 3. Create data loaders
     train_dataloader=DataLoader(dataset=train_dataset,batch_sampler=train_sampler,shuffle=False)
     val_dataloader=DataLoader(dataset=val_dataset,batch_sampler=val_sampler,shuffle=False)
 
-    # 5. Set up the optimizer, the loss and the learning rate scheduler 
+    # 4. Set up the optimizer, the loss and the learning rate scheduler 
     optimizer_G = optim.Adam(model.parameters(), lr=learning_rate_g)
     optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_d)
             
@@ -139,7 +135,7 @@ def train_model(
     n_iter = 0
     count = 0
    
-    # # 6. Begin training
+    # # 5. Begin training
     for epoch in range(start_epoch, epochs + 1):
         #Training Phase
         model.train()
@@ -368,8 +364,9 @@ def get_args():
     parser.add_argument('--lossl1weight', '-l1weight', metavar='L1W',dest='l1weight', type=float, default=1.0, help='L1 Loss Weight')    
     parser.add_argument('--losslpipsweight', '-lpipsweight', metavar='LPIPSW',dest='lpipsweight', type=float, default=1.0, help='LPIPS Loss Weight')    
     parser.add_argument('--lossadvweight', '-advweight', metavar='ADVW',dest='advweight', type=float, default=0.05, help='Adversarial Loss Weight')   
-    parser.add_argument('--trainpercent', '-trainpercent', dest='trainpercent', type=float, default=0.7, help='Train Percentage')    
-       
+    parser.add_argument('--imgscale', '-imgscale', dest='imgscale', type=int, default=512, help='Size of the image')    
+  
+    
     return parser.parse_args()
 
 
