@@ -150,8 +150,8 @@ def train_model(
         
         for batch_idx, (imgA, imgA_id, ageA, imgB, imgB_id, ageB) in enumerate(train_dataloader):
             imgA, imgB = imgA.to(device), imgB.to(device)
-            save_image((imgA + 1.0)/2.0, "src.png")
-            save_image((imgB + 1.0)/2.0, "dst.png")
+            # save_image((imgA + 1.0)/2.0, "src.png")
+            # save_image((imgB + 1.0)/2.0, "dst.png")
             ageA_matrix=[]
             for idx in range(len(ageA)):
                 ageA_matrix.append(torch.Tensor(imgA.shape[2],imgA.shape[3]).fill_(ageA[idx]/100.0))
