@@ -82,9 +82,7 @@ def train_model(
     # 1. Create dataset
       
     train_dataset=AgeDataset(train_images_dir,img_scale) 
-    val_dataset=AgeDataset(val_images_dir, 1024) 
-    all_ages = train_dataset.age_ids
-    all_ages = [int(age) for age in train_dataset.age_ids]
+    val_dataset=AgeDataset(val_images_dir,img_scale) 
 
     # 2. Create samplers
     train_sampler=AgeBatchSampler(train_dataset.n_age_ids,n_img_ids=train_dataset.n_img_ids, n_classes_per_batch=batch_size//2, n_samples_per_class=2)
@@ -148,44 +146,43 @@ def train_model(
         val_gloss=0.0
         val_dloss=0.0
         
-        for batch_idx, (imgA, imgA_id, ageA, imgB, imgB_id, ageB) in enumerate(train_dataloader):
-            imgA, imgB = imgA.to(device), imgB.to(device)
-            save_image((imgA + 1.0)/2.0, "src.png")
-            save_image((imgB + 1.0)/2.0, "dst.png")
-            ageA_matrix=[]
-            for idx in range(len(ageA)):
-                ageA_matrix.append(torch.Tensor(imgA.shape[2],imgA.shape[3]).fill_(ageA[idx]/100.0))
-            ageA_matrix=torch.stack((ageA_matrix),0)
-            ageA_matrix=torch.unsqueeze(ageA_matrix, dim=1)
-            ageB_matrix=[]
-            for idx in range(len(ageB)):
-                ageB_matrix.append(torch.Tensor(imgB.shape[2],imgB.shape[3]).fill_(ageB[idx]/100.0))
-            ageB_matrix=torch.stack((ageB_matrix),0)
-            ageB_matrix=torch.unsqueeze(ageB_matrix, dim=1)            
-            
-            ageA_matrix, ageB_matrix = ageA_matrix.to(device), ageB_matrix.to(device)
-            input_img = torch.cat((imgA, ageA_matrix, ageB_matrix), 1) # i/p img+i/p age+target age
+        for batch_idx, (img,img_id,age) in enumerate(train_dataloader):
+            img=img.permute(0,3,1,2) # Reorder dimensions to B, C, H, W 
+            img=img.to(device)
+            disp_img=img/255.0  #Normalize the image range to 0 and 1
+            age_matrix=[]
+            for idx in range(len(age)):
+                age_matrix.append(torch.Tensor(img.shape[2],img.shape[3]).fill_(age[idx]))
+            final_age_matrix=torch.stack((age_matrix),0)
+            final_age_matrix1=torch.unsqueeze(final_age_matrix, axis=1)
+            # print("Final Age Matrix Shape:", final_age_matrix)
+            final_age_matrix2=final_age_matrix1.to(device)
+            input_img=torch.cat((img[0::2]/255.0,final_age_matrix2[0::2]/100,final_age_matrix2[1::2]/100), 1) # i/p img+i/p age+target age
+            target_img=img[1::2]/255.0
+            target_age=age[1::2]
+            # print("Input Image Shape:",input_img.shape)
+            # print("Target Image Shape:",target_img.shape)
+           
+            input_img=input_img.to(device)
             
             # Forward propagation
             pred_img = model(input_img) # returns RGB aging delta
-            final_pred_img = torch.add(pred_img, imgA) # Add the aging delta to the normalized input image
-            
+            final_pred_img=torch.add(pred_img,disp_img[0::2]) # Add the aging delta to the normalized input image
             # Prepare the real image and the predicted image variations (4 channel image) to the discriminator
-            concat_pred_img = torch.cat((final_pred_img, ageB_matrix), 1) # Predicted img+target age (4 channel)
-            concat_real_img1=torch.cat((imgB, ageB_matrix), 1) # Synthetic Target image +target age (4 channel)
-            
+            concat_pred_img=torch.cat((final_pred_img,final_age_matrix2[1::2]/100.0), 1) # Predicted img+target age (4 channel)
+            concat_real_img1=torch.cat((target_img,final_age_matrix2[1::2]/100.0), 1) # Synthetic Target image +target age (4 channel)
             # Find the incorrect target age matrix
             incorrect_age=[]
-            for k, ta in enumerate(ageB):
-                incorrect_age += random.sample([aid for i, aid in enumerate(all_ages) if aid != ageB[k]], 1)
-            incorrect_age_matrix = []
+            for k, ta in enumerate(target_age):
+                incorrect_age+=random.sample([aid for i,aid in enumerate(age) if aid !=target_age[k]],1)
+            incorrect_age_matrix=[]
             for idx in range(len(incorrect_age)):
-                  incorrect_age_matrix.append(torch.Tensor(imgB.shape[2],imgB.shape[3]).fill_(incorrect_age[idx]/100.0))
-            incorrect_age_matrix = torch.stack((incorrect_age_matrix), 0)
-            incorrect_age_matrix = torch.unsqueeze(incorrect_age_matrix, dim=1)    
-            incorrect_age_matrix = incorrect_age_matrix.to(device)
+                 incorrect_age_matrix.append(torch.Tensor(img.shape[2],img.shape[3]).fill_(incorrect_age[idx]/100.0))
+            final_incorrect_age_matrix=torch.stack((incorrect_age_matrix),0)
+            final_incorrect_age_matrix1=torch.unsqueeze(final_incorrect_age_matrix, axis=1)    
+            final_incorrect_age_matrix2=final_incorrect_age_matrix1.to(device)
             
-            concat_real_img2=torch.cat((imgB, incorrect_age_matrix), 1) # Synthetic Target image +incorrect target age (4 channel)
+            concat_real_img2=torch.cat((target_img,final_incorrect_age_matrix2), 1) # Synthetic Target image +incorrect target age (4 channel)
                       
             #Backward propagation and optimization
             #Train G fix D
@@ -196,7 +193,7 @@ def train_model(
             #Right==========================================================================
             disc_pred_img = discriminator(concat_pred_img) # returns 30X30 logits map
             
-            gloss=computeGAN_GLoss(final_pred_img, disc_pred_img, imgB, l1_weight, lpips_weight, adv_weight)
+            gloss=computeGAN_GLoss(final_pred_img,disc_pred_img,target_img,l1_weight, lpips_weight, adv_weight)
             train_gloss+=gloss
             gloss.backward() 
             optimizer_G.step() # Step optimizer to update model parameters
@@ -206,12 +203,12 @@ def train_model(
             # set_requires_grad(model, False)#Even if we don't give this line, it implicitly denotes that G is trained and gradients are back propagated, hence commented for efficiency 
             optimizer_D.zero_grad()  # Set the gradients to zero
             # Compute Discriminator loss
-            disc_pred_img = discriminator(concat_pred_img.detach()) # Detatch-no gradient will be backpropagated along this variable to G
+            disc_pred_img = discriminator(concat_pred_img.detach()) # Detatch-no gradient will be backpropagated along this variable
         
             disc_real_img1 = discriminator(concat_real_img1) # returns 30X30 logits map
             disc_real_img2 = discriminator(concat_real_img2) # returns 30X30 logits map
             
-            dloss=computeGAN_DLoss(disc_pred_img, disc_real_img1, disc_real_img2, ageB, train_dataset.age_ids)
+            dloss=computeGAN_DLoss(disc_pred_img,disc_real_img1,disc_real_img2, target_age,train_dataset.age_ids)
             train_dloss+=dloss
             dloss.backward() 
             optimizer_D.step() # Step optimizer to update model parameters
@@ -241,46 +238,50 @@ def train_model(
         print("********************")
         scheduler_G.step() # Step scheduler (if needed)
         scheduler_D.step() # Step scheduler (if needed)
-        
-        ################### Validation Phase #################################
+        # Validation Phase
         model.eval()
         discriminator.eval()
              
         with torch.no_grad():
-            for batch_idx1, (imgA, imgA_id, ageA, imgB, imgB_id, ageB) in enumerate(val_dataloader):
-                imgA, imgB = imgA.to(device), imgB.to(device)
-                # disp_img=img/255.0  #Normalize the image range to 0 and 1
-                ageA_matrix=[]
-                for idx in range(len(ageA)):
-                    ageA_matrix.append(torch.Tensor(imgA.shape[2], imgA.shape[3]).fill_(ageA[idx]/100.0))
-                ageA_matrix=torch.stack((ageA_matrix), 0)
-                ageA_matrix=torch.unsqueeze(ageA_matrix, dim=1)
-                ageB_matrix=[]
-                for idx in range(len(ageB)):
-                    ageB_matrix.append(torch.Tensor(imgB.shape[2], imgB.shape[3]).fill_(ageB[idx]/100.0))
-                ageB_matrix=torch.stack((ageB_matrix), 0)
-                ageB_matrix=torch.unsqueeze(ageB_matrix, dim=1)            
-                
-                ageA_matrix, ageB_matrix = ageA_matrix.to(device), ageB_matrix.to(device)
-                input_img=torch.cat((imgA, ageA_matrix, ageB_matrix), 1) # i/p img+i/p age+target age
-                
+            for batch_idx1, (img1,img_id1,age1) in enumerate(val_dataloader):
+                img1=img1.permute(0,3,1,2) # Reorder dimensions to B, C, H, W 
+                img1=img1.to(device)
+                disp_img1=img1/255.0  #Normalize the image range to 0 and 1
+                age_matrix1=[]
+                for idx1 in range(len(age1)):
+                    age_matrix1.append(torch.Tensor(img1.shape[2],img1.shape[3]).fill_(age1[idx1]))
+                final_age_matrix1=torch.stack((age_matrix1),0)
+                final_age_matrix11=torch.unsqueeze(final_age_matrix1, axis=1)
+               
+                final_age_matrix21=final_age_matrix11.to(device)
+                input_img1=torch.cat((img1[0::2]/255.0,final_age_matrix21[0::2]/100.0,final_age_matrix21[1::2]/100.0), 1) # i/p img+i/p age+target age
+                target_img1=img1[1::2]/255.0
+                source_age1 = age1[0::2]
+                target_age1=age1[1::2]
+               
+                input_img1=input_img1.to(device)
                 # Forward propagation
-                pred_img = model(input_img) # returns RGB aging delta
-                final_pred_img = torch.add(pred_img, imgA) # Add the aging delta to the normalized input image
-            
+                pred_img1 = model(input_img1) # returns RGB aging delta
+                final_pred_img1=torch.add(pred_img1,disp_img1[0::2]) # Add the aging delta to the normalized input image
+                
                 # # # #**************************************************************
                 # # # Visualizing the image output
-                for i, img_id in enumerate(imgA_id):
+                for i, img_id in enumerate(img_id1[::2]):
                     if img_id in ['1411', '1412', '1413', '1414', '1415']:
-                        offset_img = pred_img[i, ...]
+                        # minVal=pred_img1.min()
+                        # maxVal=pred_img1.max()
+                        # vis_pred_img1=pred_img1-minVal/maxVal-minVal
+                        offset_img = pred_img1[i, ...]
                         minval = offset_img.min()
                         maxval = offset_img.max()
                         offset_img = (offset_img - minval) / (maxval - minval + 1e-10)
-                        save_image(offset_img, os.path.join("./results/vis_offset/",f'{imgA_id}_{count}_{ageA[i]}_{ageB[i]}_offset.png'))                        
-                    
-                        slice_tensor = (final_pred_img[i, :, :, :] + 1.0) / 2.0
+                        save_image(offset_img, os.path.join("./results/vis_offset/",f'{img_id}_{count}_{source_age1[i]}_{target_age1[i]}_offset.png'))                        
+                        
+                        # slice_tensor=pred_img1[i, :, :, :]
+                        # slice_tensor=vis_pred_img1[i, :, :, :]
+                        slice_tensor=final_pred_img1[i, :, :, :]
                         # slice_tensor=torch.clamp(slice_tensor, 0,1)
-                        save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id}_{count}_{ageA[i]}_{ageB[i]}_modelout.png'))
+                        save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id}_{count}_{source_age1[i]}_{target_age1[i]}_modelout.png'))
                     
                         count+=1
                         # save_image(slice_tensor,os.path.join("./data/valid_vis/",f'{img_id1[0]}_{target_age1[i]}_modelout.png'))
@@ -289,31 +290,31 @@ def train_model(
                 # # #**************************************************************
                 
                 # Prepare the real image and the predicted image variations (4 channel image) to the discriminator
-                concat_pred_img = torch.cat((final_pred_img, ageB_matrix), 1) # Predicted img+target age (4 channel)
-                concat_real_img1 = torch.cat((imgB, ageB_matrix), 1) # Synthetic Target image +target age (4 channel)
+                concat_pred_img1=torch.cat((final_pred_img1,final_age_matrix21[1::2]/100.0), 1) # Predicted img+target age (4 channel)
+                concat_real_img11=torch.cat((target_img1,final_age_matrix21[1::2]/100.0), 1) # Synthetic Target image +target age (4 channel)
                 # Find the incorrect target age matrix
-                incorrect_age=[]
-                for k1, ta1 in enumerate(ageB):
-                    incorrect_age += random.sample([aid for i,aid in enumerate(all_ages) if aid !=ageB[k1]],1)
-                incorrect_age_matrix=[]
-                for idx in range(len(incorrect_age)):
-                     incorrect_age_matrix.append(torch.Tensor(imgA.shape[2], imgA.shape[3]).fill_(incorrect_age[idx]/100.0))
-                incorrect_age_matrix = torch.stack((incorrect_age_matrix),0)
-                incorrect_age_matrix = torch.unsqueeze(incorrect_age_matrix, dim=1)    
-                incorrect_age_matrix = incorrect_age_matrix.to(device)
+                incorrect_age1=[]
+                for k1, ta1 in enumerate(target_age1):
+                    incorrect_age1+=random.sample([aid for i,aid in enumerate(age1) if aid !=target_age1[k1]],1)
+                incorrect_age_matrix1=[]
+                for idx in range(len(incorrect_age1)):
+                     incorrect_age_matrix1.append(torch.Tensor(img1.shape[2],img1.shape[3]).fill_(incorrect_age1[idx]/100.0))
+                final_incorrect_age_matrix1=torch.stack((incorrect_age_matrix1),0)
+                final_incorrect_age_matrix11=torch.unsqueeze(final_incorrect_age_matrix1, axis=1)    
+                final_incorrect_age_matrix21=final_incorrect_age_matrix11.to(device)
                 
-                concat_real_img2 = torch.cat((imgB, incorrect_age_matrix), 1) # Synthetic Target image +incorrect target age (4 channel)
+                concat_real_img21=torch.cat((target_img1,final_incorrect_age_matrix21), 1) # Synthetic Target image +incorrect target age (4 channel)
                           
                 # Compute Generator loss
-                disc_pred_img = discriminator(concat_pred_img) # returns 30X30 logits map
-                gloss1 = computeGAN_GLoss(final_pred_img, disc_pred_img, imgB, l1_weight, lpips_weight, adv_weight)
-                val_gloss += gloss1
+                disc_pred_img1 = discriminator(concat_pred_img1) # returns 30X30 logits map
+                gloss1=computeGAN_GLoss(final_pred_img1,disc_pred_img1,target_img1,l1_weight, lpips_weight, adv_weight)
+                val_gloss+=gloss1
                
                 # Compute Discriminator loss
-                disc_real_img1 = discriminator(concat_real_img1) # returns 30X30 logits map
-                disc_real_img2 = discriminator(concat_real_img2) # returns 30X30 logits map
+                disc_real_img11 = discriminator(concat_real_img11) # returns 30X30 logits map
+                disc_real_img21 = discriminator(concat_real_img21) # returns 30X30 logits map
                           
-                dloss1=computeGAN_DLoss(disc_pred_img, disc_real_img1, disc_real_img2, ageB, val_dataset.age_ids)
+                dloss1=computeGAN_DLoss(disc_pred_img1,disc_real_img11,disc_real_img21, target_age1,val_dataset.age_ids)
                 val_dloss+=dloss1
             total_val_loss=val_gloss+val_dloss
             average_val_loss =total_val_loss/len(val_dataloader)
@@ -351,7 +352,7 @@ def train_model(
 def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=100, help='Number of epochs')
-    parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=False, help='Resume checkpoint or not')
+    parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=True, help='Resume checkpoint or not')
     parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Fri_15Dec2023_170651_epoch10.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')

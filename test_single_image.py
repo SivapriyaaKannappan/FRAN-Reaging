@@ -6,13 +6,7 @@ Created on Thu Nov 23 13:14:18 2023
 
 Production-Ready Face Re-Aging for Visual Effects (FRAN - Face-Re-Aging Network) 
 https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf
-Github code is not released for this paper
 
-Dataset - Generated 2000 identities from StyleGAN which is then fed into SAM to generate reaged images at different ages (Style-based Age Manipulation)
-Generator - U-Net model
-Losses - L1 Loss, Learned Perceptual Image Patch Similarity (LPIPS) and Adversarial Loss
-        LPIPS- takes the predicted image and the target image as input and computes perceptual dissimilarity
-Discriminator - PatchGAN
 """
 
 #Divided the RGB image by 255 and the input & target age by 100 in order to normalize
@@ -32,27 +26,37 @@ import numpy as np
 from utils.loss import computeGAN_GLoss, computeGAN_DLoss
 from time import gmtime, strftime
 from torch.utils.data import DataLoader
-from patch_gan_discriminator import PatchGANDiscriminator
 from PIL import Image
 import random
 from torchvision.utils import save_image
 import torchvision.transforms as transforms
-def test_model(model,discriminator,inputimg_path,targetimg_path,input_age,target_age,output,batch_size,l1_weight: float = 1.0, lpips_weight: float =1.0, adv_weight: float = 0.05):   
+import dlib
+from utils.align_all_parallel import align_face
+
+def run_alignment(image_path):
+    predictor = dlib.shape_predictor("D:/libraries/dlib-master/shape_predictor_68_face_landmarks.dat")
+    aligned_image = align_face(filepath=image_path, predictor=predictor)
+    print("Aligned image has shape: {}".format(aligned_image.size))
+    return aligned_image
+
+def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,batch_size,l1_weight: float = 1.0, lpips_weight: float =1.0, adv_weight: float = 0.05):   
             # image to a Torch tensor 
             transform = transforms.Compose([transforms.Resize(size=(256, 256)),
                                             transforms.PILToTensor()]) 
 
             img_id=inputimg_path.split(".",2)[1].split("/",4)[-1]
-            img=Image.open(inputimg_path)
-            img=transform(img) # image to tensor
+            aligned_img=run_alignment(inputimg_path) # face image aligned similar to SAM (via dlib)
+            # img=Image.open(inputimg_path)
+            img=transform(aligned_img) # image to tensor
             if (img.shape[0] > 3):
                 img=img[:3,:,:]
             img=img.unsqueeze(0)
             img=img.to(device)
             
             if (targetimg_path != None):
-                timg=Image.open(targetimg_path)
-                timg=transform(timg) # image to tensor
+                aligned_timg=run_alignment(targetimg_path)
+                # timg=Image.open(targetimg_path)
+                timg=transform(aligned_timg) # image to tensor
                 timg=timg.unsqueeze(0)
                 timg=timg.to(device)
                 
@@ -109,17 +113,12 @@ if __name__ == '__main__':
     model = UNet(n_channels=5, n_classes=3, bilinear=args.bilinear) # To get the predicted RGB age delta
     model.to(device=device)
     
-    # Initialize the PatchGAN discriminator
-    discriminator = PatchGANDiscriminator(in_channels=4)
-    discriminator.to(device=device)
-    
     checkpoint = torch.load(args.model, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     
     
     test_model(
         model=model,
-        discriminator=discriminator,
         inputimg_path=args.input,
         targetimg_path=args.target,
         input_age=args.inputage,
