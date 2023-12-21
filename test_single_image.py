@@ -44,7 +44,7 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
             transform = transforms.Compose([transforms.Resize(size=(256, 256)),
                                             transforms.PILToTensor()]) 
 
-            img_id=inputimg_path.split(".",2)[1].split("/",4)[-1]
+            img_id=inputimg_path.split(".",2)[0].split("/",4)[-1]
             aligned_img=run_alignment(inputimg_path) # face image aligned similar to SAM (via dlib)
             # img=Image.open(inputimg_path)
             img=transform(aligned_img) # image to tensor
