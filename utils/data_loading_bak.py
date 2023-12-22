@@ -31,90 +31,6 @@ from torch.utils.data.sampler import BatchSampler
 import random
 import dlib
 from utils.align_all_parallel import align_face
-from torchvision import transforms
-
-def get_transform(preproc, params=None, grayscale=False, method=Image.BICUBIC, convert=True):
-    transform_list = []
-    if grayscale:
-        transform_list.append(transforms.Grayscale(1))
-    if 'resize' in preproc:
-        osize = [params['load_size'], params['load_size']]
-        transform_list.append(transforms.Resize(osize, method))
-
-    if 'colorjitter' in preproc:
-        transform_list.append(transforms.ColorJitter(
-            params['colorjitter_brightness'], params['colorjitter_contrast'], 
-            params['colorjitter_saturation'], params['colorjitter_hue']))
-
-    if 'rotation' in preproc:
-        transform_list.append(transforms.RandomRotation(params['rotation_degrees']))
-        
-    if 'crop' in preproc:
-        if params is None:
-            transform_list.append(transforms.RandomCrop(params['crop_size']))
-        else:
-            transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], params['crop_size'])))
-        
-    if preproc is None:
-        transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base=4, method=method)))
-
-    if 'flip' in preproc:
-        if params is None:
-            transform_list.append(transforms.RandomHorizontalFlip())
-        elif params['flip']:
-            transform_list.append(transforms.Lambda(lambda img: __flip(img, params['flip'])))
-
-    if convert:
-        transform_list += [transforms.ToTensor()]
-        if grayscale:
-            transform_list += [transforms.Normalize((0.5,), (0.5,))]
-        else:
-            transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    return transforms.Compose(transform_list)
-
-
-def __make_power_2(img, base, method=Image.BICUBIC):
-    ow, oh = img.size
-    h = int(round(oh / base) * base)
-    w = int(round(ow / base) * base)
-    if (h == oh) and (w == ow):
-        return img
-
-    __print_size_warning(ow, oh, w, h)
-    return img.resize((w, h), method)
-
-
-def __scale_width(img, target_width, method=Image.BICUBIC):
-    ow, oh = img.size
-    if (ow == target_width):
-        return img
-    w = target_width
-    h = int(target_width * oh / ow)
-    return img.resize((w, h), method)
-
-
-def __crop(img, pos, size):
-    ow, oh = img.size
-    x1, y1 = pos
-    tw = th = size
-    if (ow > tw or oh > th):
-        return img.crop((x1, y1, x1 + tw, y1 + th))
-    return img
-
-def __print_size_warning(ow, oh, w, h):
-    """Print warning information about image size(only print once)"""
-    if not hasattr(__print_size_warning, 'has_printed'):
-        print("The image size needs to be a multiple of 4. "
-              "The loaded image size was (%d, %d), so it was adjusted to "
-              "(%d, %d). This adjustment will be done to all images "
-              "whose sizes are not multiples of 4" % (ow, oh, w, h))
-        __print_size_warning.has_printed = True
-        
-
-def __flip(img, flip):
-    if flip:
-        return img.transpose(Image.FLIP_LEFT_RIGHT)
-    return img
 
 class AgeDataset(Dataset):
     def __init__(self, images_dir,img_scale):
@@ -134,15 +50,15 @@ class AgeDataset(Dataset):
         self.imgtoind=imgtoind
         self.n_imgtoind=len(imgtoind)
         # Age to indices
-        ind2age={}
+        agetoind={}
         start=int(self.age_ids[0])
         step=5
         stop=int(self.age_ids[-1])+step
         
         for ageidx, ages in enumerate(range(start,stop,step)):
-            ind2age[ageidx]=ages
+            agetoind[ageidx]=ages
         # print("Age to index:", agetoind)
-        self.ind2age=ind2age
+        self.agetoind=agetoind
         
         # Consider a matrix with age as columns and image filenames as rows
         self.onedto2dind=[]
@@ -152,35 +68,15 @@ class AgeDataset(Dataset):
             self.onedto2dind.append((row, col))
        
     def __getitem__(self, idx): # idx-list of image and age tuples
-        idxA, idxB = idx // self.tot_imgs, idx % self.tot_imgs
-        (imgA_idx,ageA_idx)=self.onedto2dind[idxA]   # img_id and age_id
-        imgA_id=self.imgtoind[imgA_idx]
-        ageA=self.ind2age[ageA_idx]
-        (imgB_idx,ageB_idx)=self.onedto2dind[idxB]   # img_id and age_id
-        imgB_id=self.imgtoind[imgB_idx]
-        ageB=self.ind2age[ageB_idx]
-        
-        imgA_path = os.path.join(str(self.images_dir),self.age_ids[ageA_idx],self.img_ids[imgA_idx]).replace("\\", '/')+'.jpg'
-        imgA=Image.open(imgA_path)
-        imgB_path = os.path.join(str(self.images_dir),self.age_ids[ageB_idx],self.img_ids[imgB_idx]).replace("\\", '/')+'.jpg'
-        imgB=Image.open(imgB_path)
-        
-        # img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS) # resize the image
-        preproc = ['colorjitter', 'rotation', 'crop']
-        params = {'colorjitter_brightness': [random.uniform(0.9, 1.1)]*2,
-                  'colorjitter_contrast': [random.uniform(0.9, 1.1)]*2,
-                  'colorjitter_saturation': [random.uniform(0.9, 1.1)]*2,
-                  'colorjitter_hue': [random.uniform(-0.1, 0.1)]*2, 
-                  'rotation_degrees': [random.uniform(-3, 3)]*2,
-                  'crop_size': self.img_scale,
-                  'crop_pos': [random.randint(0, np.maximum(0, imgA.size[0] - self.img_scale)),
-                               random.randint(0, np.maximum(0, imgA.size[1] - self.img_scale))]
-                  }
-        transform = get_transform(preproc, params)
-        imgA = transform(imgA)
-        imgB = transform(imgB)
-
-        return imgA, imgA_id, ageA, imgB, imgB_id, ageB
+        (img_idx,age_idx)=self.onedto2dind[idx]   # img_id and age_id
+        img_id=self.imgtoind[img_idx]
+        age=self.agetoind[age_idx]
+        self.img_path = os.path.join(str(self.images_dir),self.age_ids[age_idx],self.img_ids[img_idx]).replace("\\", '/')+'.jpg'
+        img=Image.open(self.img_path)
+        img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS) # resize the image
+        # img.save(os.path.join("./data/valid_vis/","test.png"))
+        img=np.array(img)
+        return img,img_id, age
         
     def __len__(self):
         return self.n_age_ids * self.n_img_ids # 3 * 10 = 30 images (16 * 2000 = 32,000 images available in the dataset)
@@ -225,7 +121,6 @@ class AgeBatchSampler(BatchSampler):
                     sample = random.choices(range(img_id * self.n_age_ids, (img_id + 1) * self.n_age_ids), k=2)
                     samples += sample
                 self.count += self.batch_size
-                samples = [samples[2*i]*self.total_sample_count + samples[2*i + 1] for i in range(self.n_classes_per_batch)]
                 yield samples
                          
     def __len__(self):  # Maximum possible combinations 
