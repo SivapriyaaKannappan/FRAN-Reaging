@@ -90,8 +90,8 @@ def align_face(filepath, predictor):
 	# read image
 	img = PIL.Image.open(filepath).convert("RGB")
 
-	output_size = 256
-	transform_size = 256
+	output_size = 1024
+	transform_size = 1024
 	enable_padding = True
 
 	# Shrink.

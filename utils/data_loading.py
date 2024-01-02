@@ -166,15 +166,17 @@ class AgeDataset(Dataset):
         imgB=Image.open(imgB_path)
         
         # img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS) # resize the image
-        preproc = ['colorjitter', 'rotation', 'crop']
+        # preproc = ['colorjitter', 'rotation', 'crop']
+        preproc = ['colorjitter', 'rotation', 'resize']
         params = {'colorjitter_brightness': [random.uniform(0.9, 1.1)]*2,
                   'colorjitter_contrast': [random.uniform(0.9, 1.1)]*2,
                   'colorjitter_saturation': [random.uniform(0.9, 1.1)]*2,
-                  'colorjitter_hue': [random.uniform(-0.1, 0.1)]*2, 
+                   'colorjitter_hue': [random.uniform(0, 0)]*2, 
                   'rotation_degrees': [random.uniform(-3, 3)]*2,
                   'crop_size': self.img_scale,
                   'crop_pos': [random.randint(0, np.maximum(0, imgA.size[0] - self.img_scale)),
-                               random.randint(0, np.maximum(0, imgA.size[1] - self.img_scale))]
+                               random.randint(0, np.maximum(0, imgA.size[1] - self.img_scale))],
+                  'load_size': 512
                   }
         transform = get_transform(preproc, params)
         imgA = transform(imgA)

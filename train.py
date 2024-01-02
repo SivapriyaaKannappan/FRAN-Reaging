@@ -82,7 +82,7 @@ def train_model(
     # 1. Create dataset
       
     train_dataset=AgeDataset(train_images_dir,img_scale) 
-    val_dataset=AgeDataset(val_images_dir, 1024) 
+    val_dataset=AgeDataset(val_images_dir, img_scale) 
     all_ages = train_dataset.age_ids
     all_ages = [int(age) for age in train_dataset.age_ids]
 
@@ -276,7 +276,7 @@ def train_model(
                         minval = offset_img.min()
                         maxval = offset_img.max()
                         offset_img = (offset_img - minval) / (maxval - minval + 1e-10)
-                        save_image(offset_img, os.path.join("./results/vis_offset/",f'{imgA_id}_{count}_{ageA[i]}_{ageB[i]}_offset.png'))                        
+                        save_image(offset_img, os.path.join("./results/vis_offset/",f'{img_id}_{count}_{ageA[i]}_{ageB[i]}_offset.png'))                        
                     
                         slice_tensor = (final_pred_img[i, :, :, :] + 1.0) / 2.0
                         # slice_tensor=torch.clamp(slice_tensor, 0,1)
@@ -352,12 +352,12 @@ def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=100, help='Number of epochs')
     parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=False, help='Resume checkpoint or not')
-    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Fri_15Dec2023_170651_epoch10.pth", help='Name of the checkpoint file')
+    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Fri_29Dec2023_092440_epoch45.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--learning_rate_g', '-lg', metavar='LRG',dest='lrg', type=float, default=1e-4, help='Learning rate for Generator')    
-    parser.add_argument('--learning_rate_d', '-ld', metavar='LRD',dest='lrd', type=float, default=1e-5, help='Learning rate for Discriminator')    
+    parser.add_argument('--learning_rate_d', '-ld', metavar='LRD',dest='lrd', type=float, default=1e-4, help='Learning rate for Discriminator')    
     parser.add_argument('--lossl1weight', '-l1weight', metavar='L1W',dest='l1weight', type=float, default=1.0, help='L1 Loss Weight')    
     parser.add_argument('--losslpipsweight', '-lpipsweight', metavar='LPIPSW',dest='lpipsweight', type=float, default=1.0, help='LPIPS Loss Weight')    
     parser.add_argument('--lossadvweight', '-advweight', metavar='ADVW',dest='advweight', type=float, default=0.05, help='Adversarial Loss Weight')   
