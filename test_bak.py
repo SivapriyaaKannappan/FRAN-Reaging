@@ -40,8 +40,7 @@ from torchvision.utils import save_image
    
 def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float = 0.3, lpips_weight: float =0.3, adv_weight: float = 0.4):   
     # 1. Create dataset
-    test_dataset=AgeDataset(test_input, 512, ['colorjitter', 'rotation']) # Load test images as 1024x1024
-    all_ages = [int(age) for age in test_dataset.age_ids]
+    test_dataset=AgeDataset(test_input) 
     # 2. Create samplers
     test_sampler=AgeBatchSampler(test_dataset.n_age_ids,n_img_ids=test_dataset.n_img_ids, n_classes_per_batch=1, n_samples_per_class=batch_size)
     # 3. Create data loader
@@ -52,66 +51,66 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
     test_dloss=0.0
     # count=0
     with torch.no_grad():
-        for batch_idx1, ((imgA, imgA_id, ageA, imgB, imgB_id, ageB)) in enumerate(test_dataloader):
-            # img1=img1.permute(0,3,1,2) # Reorder dimensions to B, C, H, W 
-            # img1=img1.to(device)
-            # disp_img1=img1/255.0  #Normalize the image range to 0 and 1
-            imgA, imgB = imgA.to(device), imgB.to(device)
-            ageA_matrix=[]
-            for idx in range(len(ageA)):
-                ageA_matrix.append(torch.Tensor(imgA.shape[2],imgA.shape[3]).fill_(ageA[idx]/100.0))
-            ageA_matrix=torch.stack((ageA_matrix),0)
-            ageA_matrix=torch.unsqueeze(ageA_matrix, dim=1)
-            ageB_matrix=[]
-            for idx in range(len(ageB)):
-                ageB_matrix.append(torch.Tensor(imgB.shape[2],imgB.shape[3]).fill_(ageB[idx]/100.0))
-            ageB_matrix=torch.stack((ageB_matrix),0)
-            ageB_matrix=torch.unsqueeze(ageB_matrix, dim=1)            
-            
-            ageA_matrix, ageB_matrix = ageA_matrix.to(device), ageB_matrix.to(device)
-            input_img = torch.cat((imgA, ageA_matrix, ageB_matrix), 1) # i/p img+i/p age+target age
-            
+        for batch_idx1, (img1,img_id1,age1) in enumerate(test_dataloader):
+            img1=img1.permute(0,3,1,2) # Reorder dimensions to B, C, H, W 
+            img1=img1.to(device)
+            disp_img1=img1/255.0  #Normalize the image range to 0 and 1
+            age_matrix1=[]
+            for idx1 in range(len(age1)):
+                age_matrix1.append(torch.Tensor(img1.shape[2],img1.shape[3]).fill_(age1[idx1]))
+            final_age_matrix1=torch.stack((age_matrix1),0)
+            final_age_matrix11=torch.unsqueeze(final_age_matrix1, axis=1)
+           
+            final_age_matrix21=final_age_matrix11.to(device)
+            input_img1=torch.cat((img1[0::2]/255.0,final_age_matrix21[0::2]/100.0,final_age_matrix21[1::2]/100.0), 1) # i/p img+i/p age+target age
+            target_img1=img1[1::2]/255.0
+            input_age1=age1[0::2]
+            target_age1=age1[1::2]
+           
+            input_img1=input_img1.to(device)
             # Forward propagation
-            pred_img = model(input_img) # returns RGB aging delta
-            final_pred_img = torch.add(pred_img, imgA) # Add the aging delta to the normalized input image
+            pred_img1 = model(input_img1) # returns RGB aging delta
+            final_pred_img1=torch.add(pred_img1,disp_img1[0::2]) # Add the aging delta to the normalized input image
             
             # Prepare the real image and the predicted image variations (4 channel image) to the discriminator
-            concat_pred_img = torch.cat((final_pred_img, ageB_matrix), 1) # Predicted img+target age (4 channel)
-            concat_real_img1=torch.cat((imgB, ageB_matrix), 1) # Synthetic Target image +target age (4 channel)
-            
+            concat_pred_img1=torch.cat((final_pred_img1,final_age_matrix21[1::2]/100.0), 1) # Predicted img+target age (4 channel)
+            concat_real_img11=torch.cat((target_img1,final_age_matrix21[1::2]/100.0), 1) # Synthetic Target image +target age (4 channel)
             # Find the incorrect target age matrix
-            incorrect_age=[]
-            for k, ta in enumerate(ageB):
-                incorrect_age += random.sample([aid for i, aid in enumerate(all_ages) if aid != ageB[k]], 1)
-            incorrect_age_matrix = []
-            for idx in range(len(incorrect_age)):
-                  incorrect_age_matrix.append(torch.Tensor(imgB.shape[2],imgB.shape[3]).fill_(incorrect_age[idx]/100.0))
-            incorrect_age_matrix = torch.stack((incorrect_age_matrix), 0)
-            incorrect_age_matrix = torch.unsqueeze(incorrect_age_matrix, dim=1)    
-            incorrect_age_matrix = incorrect_age_matrix.to(device)
+            incorrect_age1=[]
+            for k1, ta1 in enumerate(target_age1):
+                sample_list=[aid for i,aid in enumerate(age1) if aid !=target_age1[k1]]
+                if (len(sample_list) == 0):
+                    incorrect_age1+=random.sample([aid for i,aid in enumerate(age1) if aid ==target_age1[k1]],1)
+                else:
+                    incorrect_age1+=random.sample(sample_list,1)
+            incorrect_age_matrix1=[]
+            for idx in range(len(incorrect_age1)):
+                 incorrect_age_matrix1.append(torch.Tensor(img1.shape[2],img1.shape[3]).fill_(incorrect_age1[idx]/100.0))
+            final_incorrect_age_matrix1=torch.stack((incorrect_age_matrix1),0)
+            final_incorrect_age_matrix11=torch.unsqueeze(final_incorrect_age_matrix1, axis=1)    
+            final_incorrect_age_matrix21=final_incorrect_age_matrix11.to(device)
             
-            concat_real_img2=torch.cat((imgB, incorrect_age_matrix), 1) # Synthetic Target image +incorrect target age (4 channel)
+            concat_real_img21=torch.cat((target_img1,final_incorrect_age_matrix21), 1) # Synthetic Target image +incorrect target age (4 channel)
                       
             # Compute Generator loss
-            disc_pred_img = discriminator(concat_pred_img) # returns 30X30 logits map
-            gloss=computeGAN_GLoss(final_pred_img, disc_pred_img, imgB, l1_weight, lpips_weight, adv_weight)
-            test_gloss+=gloss
+            disc_pred_img1 = discriminator(concat_pred_img1) # returns 30X30 logits map
+            gloss1=computeGAN_GLoss(final_pred_img1,disc_pred_img1,target_img1,l1_weight, lpips_weight, adv_weight)
+            test_gloss+=gloss1
            
             # Compute Discriminator loss
-            disc_real_img1 = discriminator(concat_real_img1) # returns 30X30 logits map
-            disc_real_img2 = discriminator(concat_real_img2) # returns 30X30 logits map
-            dloss=computeGAN_DLoss(disc_pred_img, disc_real_img1, disc_real_img2, ageB, test_dataset.age_ids)
-            test_dloss+=dloss
+            disc_real_img11 = discriminator(concat_real_img11) # returns 30X30 logits map
+            disc_real_img21 = discriminator(concat_real_img21) # returns 30X30 logits map
+            dloss1=computeGAN_DLoss(disc_pred_img1,disc_real_img11,disc_real_img21, target_age1,test_dataset.age_ids)
+            test_dloss+=dloss1
             
             # Save the output
             # for i in range(pred_img1.size(0)):
             #     slice_tensor=pred_img1[i, :, :, :]
             #     # save_image(slice_tensor,os.path.join(output,f'{img_id1[0]}_{i}_{target_age1[i]}_out.png'))
             #     save_image(slice_tensor,os.path.join(output,f'{img_id1[0]}_{target_age1[i]}_out.png'))
-            final_pred_img = (final_pred_img + 1) / 2.0
-            slice_tensor=torch.clamp(final_pred_img, 0,1)
-            concat_out_img=torch.cat(((imgA + 1)/2.0, (imgB + 1)/2.0, slice_tensor),0) # input, target, predicted
-            save_image(concat_out_img,os.path.join("./results/",f'{imgA_id[0]}_iage_{ageA[0].item()}_tage_{ageB[0].item()}_modelout.png'))
+            slice_tensor=torch.clamp(final_pred_img1, 0,1)
+            concat_out_img=torch.cat((disp_img1[0::2], disp_img1[1::2],slice_tensor),0) # input, target, predicted
+            save_image(concat_out_img,os.path.join("./results/",f'{img_id1[0]}_iage_{input_age1.item()}_tage_{target_age1.item()}_modelout.png'))
             
     total_test_loss=test_gloss+test_dloss
     average_test_loss =total_test_loss/len(test_dataloader)
@@ -121,7 +120,7 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Sun_31Dec2023_152011_epoch60.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/FRAN_UNet_Sat_16Dec2023_151230_epoch100.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', default="./dataset/test/")
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")

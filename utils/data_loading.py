@@ -117,7 +117,7 @@ def __flip(img, flip):
     return img
 
 class AgeDataset(Dataset):
-    def __init__(self, images_dir,img_scale):
+    def __init__(self, images_dir, img_scale, preproc=[]):
         self.images_dir=images_dir
         self.age_ids=os.listdir(images_dir)
         self.img_ids=[img_name.split('.')[0] for img_name in sorted(os.listdir(str(images_dir)+'/'+self.age_ids[0])) ]
@@ -151,6 +151,8 @@ class AgeDataset(Dataset):
             col=jdx % self.n_age_ids
             self.onedto2dind.append((row, col))
        
+        self.preproc = preproc
+            
     def __getitem__(self, idx): # idx-list of image and age tuples
         idxA, idxB = idx // self.tot_imgs, idx % self.tot_imgs
         (imgA_idx,ageA_idx)=self.onedto2dind[idxA]   # img_id and age_id
@@ -167,7 +169,7 @@ class AgeDataset(Dataset):
         
         # img=img.resize((self.img_scale,self.img_scale),Image.ANTIALIAS) # resize the image
         # preproc = ['colorjitter', 'rotation', 'crop']
-        preproc = ['colorjitter', 'rotation', 'resize']
+        # preproc = ['colorjitter', 'rotation', 'resize']
         params = {'colorjitter_brightness': [random.uniform(0.9, 1.1)]*2,
                   'colorjitter_contrast': [random.uniform(0.9, 1.1)]*2,
                   'colorjitter_saturation': [random.uniform(0.9, 1.1)]*2,
@@ -178,7 +180,7 @@ class AgeDataset(Dataset):
                                random.randint(0, np.maximum(0, imgA.size[1] - self.img_scale))],
                   'load_size': 512
                   }
-        transform = get_transform(preproc, params)
+        transform = get_transform(self.preproc, params)
         imgA = transform(imgA)
         imgB = transform(imgB)
 

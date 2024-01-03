@@ -79,7 +79,7 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
             # Forward propagation
             pred_img1 = model(input_img) # returns RGB aging delta
             final_pred_img1=torch.add(pred_img1, img) # Add the aging delta to the normalized input image
-            final_pred_img1 = (final_pred_img1 + 1) / 2
+            final_pred_img1 = (final_pred_img1 + 1) / 2.0
                         
             slice_tensor=torch.clamp(final_pred_img1, 0,1)
             
