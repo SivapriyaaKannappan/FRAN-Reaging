@@ -45,18 +45,18 @@ The PatchGAN discriminator is fed with 4 channel images such as predicted image+
 For a given image along with the input age and target age, the program will output a re-aged face image based on the target age.
 ### Hyperparameter Values 
 * Image Size - 256 X 256
-* Training Epochs - 100
-* Generator's Learning Rate - 1e-04
-* Discriminator Learning Rate - 1e-05
-* Scheduler
-  * Step-size - 5
-  * Gamma - 0.9
-* Mini-batch size - 8
-  * No of identities per mini-batch - 4
-  * No of samples per identity - 2
-* Total sample count - No. of img_ids * No. of age_ids = 1400 * 16 = 22,400
-Training * Iterations - 22,400/8 = 2800 iterations
-* In the Sampler, for every epoch, the image identities are permuted to shuffle their order
+  * Training Epochs - 100
+  * Generator's Learning Rate - 1e-04
+  * Discriminator Learning Rate - 1e-05
+  * Scheduler
+    * Step-size - 5
+    * Gamma - 0.9
+  * Mini-batch size - 8
+    * No of identities per mini-batch - 4
+    * No of samples per identity - 2
+  * Total sample count - No. of img_ids * No. of age_ids = 1400 * 16 = 22,400
+  Training * Iterations - 22,400/8 = 2800 iterations
+  * In the Sampler, for every epoch, the image identities are permuted to shuffle their order
 ### Weights & Biases
 The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves are logged to the platform.
 When launching a training, a link will be printed in the console. Click on it to go to your dashboard. If you have an existing W&B account, you can link it
