@@ -82,7 +82,7 @@ def train_model(
     # 1. Create dataset
       
     train_dataset=AgeDataset(train_images_dir, img_scale, ['colorjitter', 'rotation', 'resize']) # Resize images to 512x512, no random cropping
-    val_dataset=AgeDataset(val_images_dir, img_scale) 
+    val_dataset=AgeDataset(val_images_dir, img_scale, ['colorjitter', 'rotation', 'resize']) 
     all_ages = [int(age) for age in train_dataset.age_ids]
 
     # 2. Create samplers
@@ -351,7 +351,7 @@ def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=100, help='Number of epochs')
     parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=True, help='Resume checkpoint or not')
-    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Mon_01Jan2024_224515_epoch20.pth", help='Name of the checkpoint file')
+    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Wed_03Jan2024_135017_epoch35.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
