@@ -40,7 +40,7 @@ from torchvision.utils import save_image
    
 def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float = 0.3, lpips_weight: float =0.3, adv_weight: float = 0.4):   
     # 1. Create dataset
-    test_dataset=AgeDataset(test_input, 512, ['colorjitter', 'rotation']) # Load test images as 1024x1024
+    test_dataset=AgeDataset(test_input, 512, ['colorjitter', 'rotation', 'resize']) # Load test images as 512x512
     all_ages = [int(age) for age in test_dataset.age_ids]
     # 2. Create samplers
     test_sampler=AgeBatchSampler(test_dataset.n_age_ids,n_img_ids=test_dataset.n_img_ids, n_classes_per_batch=1, n_samples_per_class=batch_size)
@@ -121,7 +121,7 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Sun_31Dec2023_152011_epoch60.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Fri_05Jan2024_135259_epoch50.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', default="./dataset/test/")
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")

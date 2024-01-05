@@ -40,7 +40,7 @@ def run_alignment(image_path):
 
 def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,batch_size,l1_weight: float = 1.0, lpips_weight: float =1.0, adv_weight: float = 0.05):   
             # image to a Torch tensor 
-            transform = transforms.Compose([transforms.Resize(size=(1024, 1024)),
+            transform = transforms.Compose([transforms.Resize(size=(512, 512)),
                                             transforms.ToTensor(),
                                             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) 
 
@@ -78,7 +78,7 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
             input_img=input_img.to(device)
             # Forward propagation
             pred_img1 = model(input_img) # returns RGB aging delta
-            final_pred_img1=torch.add(pred_img1, img) # Add the aging delta to the normalized input image
+            final_pred_img1=torch.add(0.6 * pred_img1, img) # Add the aging delta to the normalized input image
             final_pred_img1 = (final_pred_img1 + 1) / 2.0
                         
             slice_tensor=torch.clamp(final_pred_img1, 0,1)
@@ -92,15 +92,15 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Sun_31Dec2023_152011_epoch60.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Fri_05Jan2024_135259_epoch50.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     # parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="./resized_dataset/test/25/1845.jpg")
     # parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
     # parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
     # parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default="./resized_dataset/test/75/1845.jpg")
-    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="1100200011739_out_0_00.png")
-    parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=20)
-    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=85)
+    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="2022.12.16_16.09.53.png")
+    parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
+    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=80)
     parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default=None)
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=2, help='Size of the mini-batch')
