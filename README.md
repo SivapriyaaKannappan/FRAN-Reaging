@@ -57,6 +57,42 @@ For a given image along with the input age and target age, the program will outp
   * Total sample count - No. of img_ids * No. of age_ids = 1400 * 16 = 22,400
   Training * Iterations - 22,400/8 = 2800 iterations
   * In the Sampler, for every epoch, the image identities are permuted to shuffle their order
+### Hyperparameter Values for 1024 X 1024 Training Images
+* Image Size - 1024 X 1024
+  * Data augmentation
+    * Add color jittering to brightness, contrast, saturation and hue uniformly sampled from the range (0.9, 1.1), (0.9, 1.1), (0.9, 1.1), (-0.1, 0.1) respectively. 
+    * Randomly rotated for a degree sampled from (-3, 3)
+    * Randomly cropped to 512 x 512
+  * Training Epochs - 60
+  * Generator's Learning Rate - 1e-04
+  * Discriminator Learning Rate - 1e-05
+  * Scheduler
+    * Step-size - 5
+    * Gamma - 0.9
+  * Mini-batch size - 8
+    * No of identities per mini-batch - 4
+    * No of samples per identity - 2
+  * Total sample count - No. of img_ids * No. of age_ids = 1400 * 16 = 22,400
+  Training * Iterations - 22,400/8 = 2800 iterations
+  * In the Sampler, for every epoch, the image identities are permuted to shuffle their order
+### Hyperparameter Values for 512 X 512 Training Images
+* Image Size - 1024 X 1024
+  * Data augmentation
+    * Add color jittering to brightness, contrast and saturation uniformly sampled from the range (0.9, 1.1), (0.9, 1.1) and (0.9, 1.1) respectively. 
+    * Randomly rotated for a degree sampled from (-3, 3)
+    * Resize to 512 x 512
+  * Training Epochs - 70
+  * Generator's Learning Rate - 1e-04
+  * Discriminator Learning Rate - 1e-04
+  * Scheduler
+    * Step-size - 5
+    * Gamma - 0.9
+  * Mini-batch size - 8
+    * No of identities per mini-batch - 4
+    * No of samples per identity - 2
+  * Total sample count - No. of img_ids * No. of age_ids = 1400 * 16 = 22,400
+  Training * Iterations - 22,400/8 = 2800 iterations
+  * In the Sampler, for every epoch, the image identities are permuted to shuffle their order
 ### Weights & Biases
 The training progress can be visualized in real-time using [Weights & Biases](https://wandb.ai/).  Loss curves, validation curves are logged to the platform.
 When launching a training, a link will be printed in the console. Click on it to go to your dashboard. If you have an existing W&B account, you can link it
@@ -78,6 +114,10 @@ Please download the pretrained model of FRAN for 256 X 256 training images from 
 ### Testing
 Having trained your model or if you're using a pretrained FRAN model, you can use test_single_image.py to run inference on a given image.
 
+### Issues with the aging effect
+  * The aged face tends to have bigger irises and eyes due to the training data generated from SAM
+  * The aging effect is unitary. I.e., all aging effects look similar.
+ 
 ## Citation
 If you use this code for your research, please consider citing the [FRAN paper](https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf) on which this work is based.
 ```console
