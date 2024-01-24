@@ -108,9 +108,10 @@ def test_model(model,discriminator,test_input,output,batch_size,l1_weight: float
             #     slice_tensor=pred_img1[i, :, :, :]
             #     # save_image(slice_tensor,os.path.join(output,f'{img_id1[0]}_{i}_{target_age1[i]}_out.png'))
             #     save_image(slice_tensor,os.path.join(output,f'{img_id1[0]}_{target_age1[i]}_out.png'))
-            final_pred_img = (final_pred_img + 1) / 2.0
-            slice_tensor=torch.clamp(final_pred_img, 0,1)
-            concat_out_img=torch.cat(((imgA + 1)/2.0, (imgB + 1)/2.0, slice_tensor),0) # input, target, predicted
+            # final_pred_img = (final_pred_img + 1) / 2.0
+            slice_tensor=torch.clamp(final_pred_img, 0, 1)
+            # concat_out_img=torch.cat(((imgA + 1)/2.0, (imgB + 1)/2.0, slice_tensor),0) # input, target, predicted
+            concat_out_img=torch.cat((imgA, imgB, slice_tensor), 0) # input, target, predicted
             save_image(concat_out_img,os.path.join("./results/",f'{imgA_id[0]}_iage_{ageA[0].item()}_tage_{ageB[0].item()}_modelout.png'))
             
     total_test_loss=test_gloss+test_dloss

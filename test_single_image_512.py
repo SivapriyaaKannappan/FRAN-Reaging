@@ -41,8 +41,8 @@ def run_alignment(image_path):
 def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,batch_size,l1_weight: float = 1.0, lpips_weight: float =1.0, adv_weight: float = 0.05):   
             # image to a Torch tensor 
             transform = transforms.Compose([transforms.Resize(size=(512, 512)),
-                                            transforms.ToTensor(),
-                                            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) 
+                                            transforms.ToTensor()])
+                                            # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) 
 
             img_id=inputimg_path.split(".",2)[0].split("/",4)[-1]
             aligned_img=run_alignment(inputimg_path) # face image aligned similar to SAM (via dlib)
@@ -61,30 +61,31 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
                 timg=timg.to(device)
                 
                 # tdisp_img1=timg/255.0  #Normalize the image range to 0 and 1
-                tdisp_img1 = (timg + 1) * 0.5
+                # tdisp_img1 = (timg + 1) * 0.5
+                tdisp_img1 = timg
             
             # disp_img1=img/255.0  #Normalize the image range to 0 and 1
-            disp_img1  = (img + 1) * 0.5
+            # disp_img1  = (img + 1) * 0.5
+            disp_img1 = img
             
-            iage_matrix=torch.Tensor(img.shape[2],img.shape[3]).fill_(input_age)
+            iage_matrix=torch.Tensor(img.shape[2],img.shape[3]).fill_(input_age/100.0)
             iage_matrix=iage_matrix.unsqueeze(0)
             iage_matrix=iage_matrix.unsqueeze(1).to(device)
             
-            tage_matrix=torch.Tensor(img.shape[2],img.shape[3]).fill_(target_age)
+            tage_matrix=torch.Tensor(img.shape[2],img.shape[3]).fill_(target_age/100.0)
             tage_matrix=tage_matrix.unsqueeze(0)
             tage_matrix=tage_matrix.unsqueeze(1).to(device)
           
-            input_img=torch.cat((img, iage_matrix/100.0, tage_matrix/100.0), 1) # i/p img+i/p age+target age
+            input_img=torch.cat((img, iage_matrix, tage_matrix), 1) # i/p img+i/p age+target age
             input_img=input_img.to(device)
             # Forward propagation
             pred_img1 = model(input_img) # returns RGB aging delta
-            final_pred_img1=torch.add(0.5 * pred_img1, img) # Add the aging delta to the normalized input image
-            final_pred_img1 = (final_pred_img1 + 1) / 2.0
-                        
-            slice_tensor=torch.clamp(final_pred_img1, 0,1)
+            final_pred_img1 = torch.add(pred_img1, img) # Add the aging delta to the normalized input image
+            # final_pred_img1 = (final_pred_img1 + 1) / 2.0
+            slice_tensor=torch.clamp(final_pred_img1, 0, 1)
             
             if (targetimg_path != None):
-                concat_out_img=torch.cat((disp_img1, tdisp_img1,slice_tensor),0) # input, target, predicted
+                concat_out_img=torch.cat((disp_img1, tdisp_img1, slice_tensor),0) # input, target, predicted
                 save_image(concat_out_img,os.path.join("./results/",f'{img_id}_iage_{input_age}_tage_{target_age}_modelout_512.png'))
             else:
                 concat_out_img=torch.cat((disp_img1,slice_tensor),0) # input, target, predicted
@@ -92,15 +93,15 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Mon_08Jan2024_003928_epoch70.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Tue_23Jan2024_101446_epoch90.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     # parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="./resized_dataset/test/25/1845.jpg")
     # parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
     # parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
     # parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default="./resized_dataset/test/75/1845.jpg")
-    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="embfemale20-2neutral.jpg")
+    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="CAF_MIS_1_ok adult wa2073-20160118###5_hoodie_H0103.png")
     parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
-    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=70)
+    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=10)
     parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default=None)
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=2, help='Size of the mini-batch')

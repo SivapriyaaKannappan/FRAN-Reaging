@@ -113,6 +113,7 @@ def train_model(
     else:
         start_epoch=1
         
+    os.makedirs("./results/vis_offset/", exist_ok=True)
     # (Initialize logging)
     experiment = wandb.init(project='FRAN TOY', name='Face Re-Aging', 
                 # track hyperparameters and run metadata
@@ -248,7 +249,6 @@ def train_model(
         with torch.no_grad():
             for batch_idx1, (imgA, imgA_id, ageA, imgB, imgB_id, ageB) in enumerate(val_dataloader):
                 imgA, imgB = imgA.to(device), imgB.to(device)
-                # disp_img=img/255.0  #Normalize the image range to 0 and 1
                 ageA_matrix=[]
                 for idx in range(len(ageA)):
                     ageA_matrix.append(torch.Tensor(imgA.shape[2], imgA.shape[3]).fill_(ageA[idx]/100.0))
@@ -277,8 +277,9 @@ def train_model(
                         offset_img = (offset_img - minval) / (maxval - minval + 1e-10)
                         save_image(offset_img, os.path.join("./results/vis_offset/",f'{img_id}_{count}_{ageA[i]}_{ageB[i]}_offset.png'))                        
                     
-                        slice_tensor = (final_pred_img[i, :, :, :] + 1.0) / 2.0
-                        # slice_tensor=torch.clamp(slice_tensor, 0,1)
+                        # slice_tensor = (final_pred_img[i, :, :, :] + 1.0) / 2.0
+                        slice_tensor = final_pred_img[i, :, :, :]
+                        slice_tensor=torch.clamp(slice_tensor, 0, 1)
                         save_image(slice_tensor,os.path.join("./results/vis_offset/",f'{img_id}_{count}_{ageA[i]}_{ageB[i]}_modelout.png'))
                     
                         count+=1
@@ -333,7 +334,7 @@ def train_model(
               f' Avg Validation Loss: {average_val_loss.item():.4f}\n')
               # f' Validation Accuracy: {average_val_accuracy:.4f}')
         print("********************")
-        if (epoch%5 == 0):
+        if (epoch%1 == 0):
             # Save the model every 5 epochs
             torch.save({'epoch'               : epoch,
                               'model_state_dict'    : model.state_dict(),
@@ -351,7 +352,7 @@ def get_args():
     parser=argparse.ArgumentParser(description='Train FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=100, help='Number of epochs')
     parser.add_argument('--resume_checkpoint', '-resume', metavar='R', dest='resume', type=bool, default=True, help='Resume checkpoint or not')
-    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Fri_05Jan2024_135259_epoch50.pth", help='Name of the checkpoint file')
+    parser.add_argument('--checkpoint_file', '-chkpt', metavar='CP', dest='chkpt', type=str, default="checkpoints/UNet_Mon_22Jan2024_091107_epoch77.pth", help='Name of the checkpoint file')
     parser.add_argument('--start_epoch', '-se', metavar='SE', type=int, default=1, help='Starting epoch')
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=8, help='Size of the mini-batch')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
