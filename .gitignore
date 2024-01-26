@@ -2,7 +2,8 @@ checkpoints/
 dataset/
 resized_dataset/
 toy_test_data/
-
+data_256/
+data_1024/
 results/
 
 __pycache__
