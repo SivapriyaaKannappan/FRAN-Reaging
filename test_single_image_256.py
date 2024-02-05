@@ -31,6 +31,9 @@ from torchvision.utils import save_image
 import torchvision.transforms as transforms
 import dlib
 from utils.align_all_parallel import align_face
+from torchvision.transforms.functional import normalize
+from facexlib.utils.misc import img2tensor, imwrite
+import cv2 
 
 def run_alignment(image_path):
     predictor = dlib.shape_predictor("D:/libraries/dlib-master/shape_predictor_68_face_landmarks.dat")
@@ -73,11 +76,14 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
             tage_matrix=torch.Tensor(img.shape[2],img.shape[3]).fill_(target_age)
             tage_matrix=tage_matrix.unsqueeze(0)
             tage_matrix=tage_matrix.unsqueeze(1).to(device)
-          
+        
             input_img=torch.cat((img, iage_matrix/100.0, tage_matrix/100.0), 1) # i/p img+i/p age+target age
             input_img=input_img.to(device)
+                
             # Forward propagation
             pred_img1 = model(input_img) # returns RGB aging delta
+            
+           
             final_pred_img1=torch.add(pred_img1, img) # Add the aging delta to the normalized input image
             # final_pred_img1 = (final_pred_img1 + 1) / 2.0
                         
@@ -87,20 +93,20 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
                 concat_out_img=torch.cat((disp_img1, tdisp_img1,slice_tensor),0) # input, target, predicted
                 save_image(concat_out_img,os.path.join("./results/",f'{img_id}_iage_{input_age}_tage_{target_age}_modelout_256.png'))
             else:
-                concat_out_img=torch.cat((disp_img1,slice_tensor),0) # input, target, predicted
+                concat_out_img=torch.cat((disp_img1,slice_tensor),0) # input, predicted
                 save_image(concat_out_img,os.path.join("./results/",f'{img_id}_iage_{input_age}_tage_{target_age}_modelout_256.png'))
     
 def get_args():
     parser=argparse.ArgumentParser(description='Test FRAN via UNet with input aged/de-aged images and output aged/de-aged images')
-    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/UNet_Sat_16Dec2023_151230_epoch100.pth",help='Specify the file in which the model is stored')
+    parser.add_argument('--model', '-m',metavar="FILE", default="checkpoints/FRAN_UNet_Sat_16Dec2023_151230_256X256_epoch100.pth",help='Specify the file in which the model is stored')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     # parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="./resized_dataset/test/25/1845.jpg")
     # parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
     # parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
     # parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default="./resized_dataset/test/75/1845.jpg")
-    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="4_res.jpg")
+    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="input/She1.jpg")
     parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=20)
-    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=45)
+    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=60)
     parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default=None)
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
     parser.add_argument('--batch_size', '-b', metavar = 'B', type=int, default=2, help='Size of the mini-batch')
@@ -131,6 +137,6 @@ if __name__ == '__main__':
         batch_size=args.batch_size,
         l1_weight=args.l1weight,
         lpips_weight=args.lpipsweight,
-        adv_weight =args.advweight
+        adv_weight =args.advweight,
         )
    
