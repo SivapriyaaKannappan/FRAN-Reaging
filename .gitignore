@@ -19,7 +19,11 @@ model_convert2onnx_FRAN.py
 *.png
 *.JPG
 *.jpeg
+*.onnx
+*.pth
 
 #Ignore Wandb
 wandb/
+
+weights/*.pth
 

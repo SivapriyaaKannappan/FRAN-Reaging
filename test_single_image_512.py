@@ -30,13 +30,38 @@ import random
 from torchvision.utils import save_image
 import torchvision.transforms as transforms
 import dlib
-from utils.align_all_parallel import align_face
+# from utils.align_all_parallel import align_face
+from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 
+device=torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+face_helper = FaceRestoreHelper(
+    1,
+    face_size=512,
+    crop_ratio=(1, 1),
+    det_model='retinaface_resnet50',
+    save_ext='png',
+    use_parse=True,
+    device=device,
+    model_rootpath='weights')
+        
 def run_alignment(image_path):
-    predictor = dlib.shape_predictor("D:/libraries/dlib-master/shape_predictor_68_face_landmarks.dat")
-    aligned_image = align_face(filepath=image_path, predictor=predictor)
-    print("Aligned image has shape: {}".format(aligned_image.size))
-    return aligned_image
+    # predictor = dlib.shape_predictor("D:/libraries/dlib-master/shape_predictor_68_face_landmarks.dat")
+    # aligned_image = align_face(filepath=image_path, predictor=predictor)
+    # print("Aligned image has shape: {}".format(aligned_image.size))
+    face_helper.read_image(image_path)
+        
+    # get face landmarks for each face
+    face_helper.get_face_landmarks_5(only_center_face=True, eye_dist_threshold=5)
+    # eye_dist_threshold=5: skip faces whose eye distance is smaller than 5 pixels
+    # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
+    # align and warp each face
+    face_helper.align_warp_face()
+
+    # face restoration
+    aligned_img = face_helper.cropped_faces[0]    
+    aligned_img = aligned_img[:,:,::-1]
+    aligned_img = Image.fromarray(aligned_img)
+    return aligned_img
 
 def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,batch_size,l1_weight: float = 1.0, lpips_weight: float =1.0, adv_weight: float = 0.05):   
             # image to a Torch tensor 
@@ -46,6 +71,7 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
 
             img_id=inputimg_path.split(".",2)[0].split("/",4)[-1]
             aligned_img=run_alignment(inputimg_path) # face image aligned similar to SAM (via dlib)
+            
             # img=Image.open(inputimg_path)
             img=transform(aligned_img) # image to tensor
             if (img.shape[0] > 3):
@@ -99,7 +125,7 @@ def get_args():
     # parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
     # parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
     # parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default="./resized_dataset/test/75/1845.jpg")
-    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="CAF_MIS_1_ok adult wa2073-20160118###5_hoodie_H0103.png")
+    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="CHM_BM_1_21.png")
     parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
     parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=10)
     parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default=None)
@@ -112,7 +138,6 @@ def get_args():
 
 if __name__ == '__main__':
     args=get_args()
-    device=torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
     # n_channels=5 for RGB+ InputAge + Target Age
     # n_classes is the number of probabilities you want to get per output pixel
     model = UNet(n_channels=5, n_classes=3, bilinear=args.bilinear) # To get the predicted RGB age delta
