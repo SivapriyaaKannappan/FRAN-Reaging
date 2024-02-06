@@ -8,10 +8,13 @@ Production-Ready Face Re-Aging for Visual Effects (FRAN - Face-Re-Aging Network)
 https://studios.disneyresearch.com/app/uploads/2022/10/Production-Ready-Face-Re-Aging-for-Visual-Effects.pdf
 
 """
-
 #Divided the RGB image by 255 and the input & target age by 100 in order to normalize
 #the image range to 0 and 1 before feeding to the model
 # Similarly after the training the predicted image will be between 0 and 1 
+
+# Incorporated face segmentation to re-age specific parts of the image by using facexlib Parsenet and it's alignment.
+# Aligned the face image similar to parsenet and normalized the aligned image between -1 to 1 and Parsenet expects BGR image.
+#(Referred Parsenet from GFPGAN)
 
 import argparse
 import os
@@ -124,8 +127,8 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
         # # Segmentation mask of an re-aged image to focus on the specific facial features
         aligned_img=np.array(aligned_img)
         aligned_img = cv2.resize(aligned_img, (512, 512), interpolation=cv2.INTER_LINEAR)
-        aligned_img = img2tensor(aligned_img.astype('float32') / 255., bgr2rgb=True, float32=True)
-        normalize(aligned_img, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
+        aligned_img = img2tensor(aligned_img.astype('float32') / 255., bgr2rgb=False, float32=True) # Parsenet expects BGR image
+        normalize(aligned_img, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True) # Normalize between -1 and 1
         norm_img = torch.unsqueeze(aligned_img, 0).to(device)
         
         with torch.no_grad():
@@ -138,17 +141,17 @@ def test_model(model,inputimg_path,targetimg_path,input_age,target_age,output,ba
         		# 'u_lip', 'l_lip', 'hair', 'hat',? , ? ,'neck', 'cloth']
         # MASK_COLORMAP = [0, 255, 255, 255, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0]
         # MASK_COLORMAP = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0] # eyes and eyebrows
-        MASK_COLORMAP = [0, 0, 0,255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,255, 0] # eyes and eyebrows
+        MASK_COLORMAP = [0, 0, 0,0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0,255, 0] # eyes and eyebrows
         
         for idx, color in enumerate(MASK_COLORMAP):
             mask[out == idx] = color
        
         # #*****************************
-        save_image(img,"img.png")
+        # save_image(img,"img.png")
         
-        # Convert mask into uint8 to SAVE
-        mask=mask.astype(np.uint8)
-        cv2.imwrite("mask.png",mask)
+        # # Convert mask into uint8 to SAVE
+        # mask=mask.astype(np.uint8)
+        # cv2.imwrite("mask.png",mask)
         #*****************************
        
         norm_mask=mask/255.
@@ -195,9 +198,9 @@ def get_args():
     # parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=75)
     # parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default="./resized_dataset/test/75/1845.jpg")
 
-    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="CHM_BM_1_21.png")
-    parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=25)
-    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=10)
+    parser.add_argument('--inputimage', '-i', metavar='INPUT', dest="input", help='Filename of input image', default="input/She1.jpg")
+    parser.add_argument('--inputage', '-ia', metavar='INPUTAGE', dest="inputage", help='Input age', default=20)
+    parser.add_argument('--targetage', '-ta', metavar='TARGETAGE',dest="targetage", help='Target age', default=60)
 
     parser.add_argument('--targetimage', '-t', metavar='TARGET', dest="target", help='Filename of target image', default=None)
     parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images', default="results/")
@@ -205,7 +208,7 @@ def get_args():
     parser.add_argument('--lossl1weight', '-l1weight', metavar='L1W',dest='l1weight', type=float, default=1.0, help='L1 Loss Weight')    
     parser.add_argument('--losslpipsweight', '-lpipsweight', metavar='LPIPSW',dest='lpipsweight', type=float, default=1.0, help='LPIPS Loss Weight')    
     parser.add_argument('--lossadvweight', '-advweight', metavar='ADVW',dest='advweight', type=float, default=0.05, help='Adversarial Loss Weight')    
-    parser.add_argument('--useparse', '-use_parse',dest='use_parse', type=bool, default=True, help='Whether to Segment specific facial parts for re-aging')    
+    parser.add_argument('--useparse', '-use_parse',dest='use_parse', type=bool, default=False, help='Whether to Segment specific facial parts for re-aging')    
     return parser.parse_args()
 
 if __name__ == '__main__':
